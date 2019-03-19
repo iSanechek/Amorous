@@ -18,7 +18,7 @@ interface LocalDatabase {
     suspend fun getCandidates(select: String, args: Array<String>?): List<Candidate>
 }
 
-class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(context, "candidate.db", null, 1) {
+class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(context, "candidate.db", null, 2) {
 
     override suspend fun saveCandidates(items: List<Candidate>) {
         val count = getCount()
@@ -104,13 +104,14 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
         val CREATE_TABLE_CANDIDATE = "CREATE TABLE ${Candidate.TABLE_NAME} (" +
                 "${Candidate.COLUMN_UID} $DB_COLUMN_INTEGER, " +
                 "${Candidate.COLUMN_NAME} $DB_COLUMN_TEXT, " +
-                "${Candidate.COLUMN_REMOTE_COVER_URL} $DB_COLUMN_TEXT, " +
-                "${Candidate.COLUMN_TEMP_LOCAL_BITMAP_PATH} $DB_COLUMN_TEXT, " +
-                "${Candidate.COLUMN_ORIGINAL_BITMAP_PATH} $DB_COLUMN_TEXT, " +
+                "${Candidate.COLUMN_THUMBNAIL_STATUS} $DB_COLUMN_TEXT, " +
+                "${Candidate.COLUMN_TEMP_PATH} $DB_COLUMN_TEXT, " +
+                "${Candidate.COLUMN_ORIGINAL_PATH} $DB_COLUMN_TEXT, " +
                 "${Candidate.COLUMN_SIZE} $DB_COLUMN_TEXT, " +
-                "${Candidate.COLUMN_NEED_ORIGINAL_UPLOAD} $DB_COLUMN_TEXT, " +
+                "${Candidate.COLUMN_ORIGINAL_STATUS} $DB_COLUMN_TEXT, " +
                 "${Candidate.COLUMN_TYPE} $DB_COLUMN_TEXT, " +
-                "${Candidate.COLUMN_NEED_LOCAL_BACKUP} $DB_COLUMN_TEXT);"
+                "${Candidate.COLUMN_BACKUP_STATUS} $DB_COLUMN_TEXT, " +
+                "${Candidate.TABLE_NAME} $DB_COLUMN_INTEGER);"
         db?.execSQL(CREATE_TABLE_CANDIDATE)
     }
 
@@ -123,13 +124,14 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
     private fun getCandidateItem(c: Cursor) : Candidate = Candidate(
             uid = c.getInt(c.getColumnIndex(Candidate.COLUMN_UID)),
             name = c.getString(c.getColumnIndex(Candidate.COLUMN_NAME)),
-            needLocalBackup = c.getString(c.getColumnIndex(Candidate.COLUMN_NEED_LOCAL_BACKUP)),
-            needOriginalUpload = c.getString(c.getColumnIndex(Candidate.COLUMN_NEED_ORIGINAL_UPLOAD)),
-            originalLocalBitmapPath = c.getString(c.getColumnIndex(Candidate.COLUMN_ORIGINAL_BITMAP_PATH)),
-            tempLocalBitmapPath = c.getString(c.getColumnIndex(Candidate.COLUMN_TEMP_LOCAL_BITMAP_PATH)),
-            remoteCoverUrl = c.getString(c.getColumnIndex(Candidate.COLUMN_REMOTE_COVER_URL)),
+            backupStatus = c.getString(c.getColumnIndex(Candidate.COLUMN_BACKUP_STATUS)),
+            originalStatus = c.getString(c.getColumnIndex(Candidate.COLUMN_ORIGINAL_STATUS)),
+            originalPath = c.getString(c.getColumnIndex(Candidate.COLUMN_ORIGINAL_PATH)),
+            tempPath = c.getString(c.getColumnIndex(Candidate.COLUMN_TEMP_PATH)),
+            thumbnailStatus = c.getString(c.getColumnIndex(Candidate.COLUMN_THUMBNAIL_STATUS)),
             size = c.getString(c.getColumnIndex(Candidate.COLUMN_SIZE)),
-            type = c.getString(c.getColumnIndex(Candidate.COLUMN_TYPE))
+            type = c.getString(c.getColumnIndex(Candidate.COLUMN_TYPE)),
+            date = c.getLong(c.getColumnIndex(Candidate.COLUMN_DATE))
     )
 
     private fun getCvFromCandidate(item: Candidate, update: Boolean = false): ContentValues {
@@ -137,13 +139,14 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
         with(v) {
             if (!update) put(Candidate.COLUMN_UID, item.uid)
             put(Candidate.COLUMN_NAME, item.name)
-            put(Candidate.COLUMN_REMOTE_COVER_URL, item.remoteCoverUrl)
-            put(Candidate.COLUMN_TEMP_LOCAL_BITMAP_PATH, item.tempLocalBitmapPath)
-            put(Candidate.COLUMN_ORIGINAL_BITMAP_PATH, item.originalLocalBitmapPath)
+            put(Candidate.COLUMN_THUMBNAIL_STATUS, item.thumbnailStatus)
+            put(Candidate.COLUMN_TEMP_PATH, item.tempPath)
+            put(Candidate.COLUMN_ORIGINAL_PATH, item.originalPath)
             put(Candidate.COLUMN_SIZE, item.size)
-            put(Candidate.COLUMN_NEED_ORIGINAL_UPLOAD, item.needOriginalUpload)
+            put(Candidate.COLUMN_ORIGINAL_STATUS, item.originalStatus)
             put(Candidate.COLUMN_TYPE, item.type)
-            put(Candidate.COLUMN_NEED_LOCAL_BACKUP, item.needLocalBackup)
+            put(Candidate.COLUMN_BACKUP_STATUS, item.backupStatus)
+            put(Candidate.COLUMN_DATE, item.date)
         }
         return v
     }
@@ -172,5 +175,4 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
         private const val DB_COLUMN_INTEGER = "INTEGER"
         private const val DB_COLUMN_TEXT = "TEXT"
     }
-
 }

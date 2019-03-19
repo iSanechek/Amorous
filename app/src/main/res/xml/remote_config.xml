@@ -2,10 +2,18 @@
 <defaultsMap>
     <entry>
         <key>worker_retry_value</key>
-        <value>0</value>
+        <value>3</value>
     </entry>
     <entry>
         <key>jobs_server_start</key>
         <value>true</value>
+    </entry>
+    <entry>
+        <key>time_for_scan_worker</key>
+        <value>12</value>
+    </entry>
+    <entry>
+        <key>time_for_sync_worker</key>
+        <value>5</value>
     </entry>
 </defaultsMap>

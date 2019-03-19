@@ -58,6 +58,7 @@ val appModule = module {
         UploadBitmapUtilsImpl(
                 get(),
                 get(),
+                get(),
                 get()
         )
     }

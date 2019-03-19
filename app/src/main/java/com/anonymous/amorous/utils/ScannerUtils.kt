@@ -63,13 +63,14 @@ class ScannerUtils(
                     candidates.add(Candidate(
                             uid = item.name.hashCode(),
                             name = item.name,
-                            remoteCoverUrl = String.empty(),
+                            thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_NEED,
                             type = Candidate.VIDEO_TYPE,
                             size = fileUtil.getReadableFileSize(item.length()),
-                            originalLocalBitmapPath = item.absolutePath,
-                            tempLocalBitmapPath = String.empty(),
-                            needOriginalUpload = Candidate.ORIGINAL_FILE_UPLOAD_READE,
-                            needLocalBackup = Candidate.ORIGINAL_FILE_NO_BACKUP
+                            originalPath = item.absolutePath,
+                            tempPath = String.empty(),
+                            originalStatus = Candidate.ORIGINAL_UPLOAD_READE,
+                            backupStatus = Candidate.ORIGINAL_NO_BACKUP,
+                            date = item.lastModified()
                     ))
                 }
 
@@ -77,13 +78,14 @@ class ScannerUtils(
                     candidates.add(Candidate(
                             uid = item.name.hashCode(),
                             name = item.name,
-                            remoteCoverUrl = String.empty(),
+                            thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_NEED,
                             type = Candidate.IMAGE_TYPE,
                             size = fileUtil.getReadableFileSize(item.length()),
-                            originalLocalBitmapPath = item.absolutePath,
-                            tempLocalBitmapPath = String.empty(),
-                            needOriginalUpload = Candidate.ORIGINAL_FILE_UPLOAD_READE,
-                            needLocalBackup = Candidate.ORIGINAL_FILE_NO_BACKUP
+                            originalPath = item.absolutePath,
+                            tempPath = String.empty(),
+                            originalStatus = Candidate.ORIGINAL_UPLOAD_READE,
+                            backupStatus = Candidate.ORIGINAL_NO_BACKUP,
+                            date = item.lastModified()
                     ))
                 }
             }

@@ -73,9 +73,9 @@ class DebugActivity : AppCompatActivity() {
                     logDebug {
                         "Candidate id ${item.uid} \n" +
                                 "Candidate name ${item.name} \n" +
-                                "Candidate original path ${item.originalLocalBitmapPath} \n" +
+                                "Candidate original path ${item.originalPath} \n" +
                                 "Candidate size ${item.size} \n" +
-                                "Candidate temp path ${item.tempLocalBitmapPath} \n" +
+                                "Candidate temp path ${item.tempPath} \n" +
                                 "Candidate type ${item.type}\n" +
                                 "========================="
                     }

@@ -1,13 +1,9 @@
 package com.anonymous.amorous.utils
 
 import android.graphics.Bitmap
-import com.anonymous.amorous.DB_T_U
 import com.anonymous.amorous.data.Candidate
-import com.anonymous.amorous.data.User
 import com.anonymous.amorous.data.database.LocalDatabase
 import com.anonymous.amorous.debug.logDebug
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.*
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -23,91 +19,100 @@ interface UploadBitmapUtils {
 class UploadBitmapUtilsImpl(
         private val scanner: ScanContract,
         private val database: DatabaseContract,
-        private val localDb: LocalDatabase
+        private val localDb: LocalDatabase,
+        private val tracker: TrackingUtils
 ) : UploadBitmapUtils {
 
-    override fun uploadBitmap(candidate: Candidate) {
+    private val events = hashSetOf<String>()
 
+    override fun uploadBitmap(candidate: Candidate) {
         val storage = FirebaseStorage.getInstance()
         val imageRef = storage.reference
-
-        if (candidate.needOriginalUpload == Candidate.ORIGINAL_FILE_UPLOAD_NEED) {
-            logDebug {
-                "Upload original ${candidate.name}"
-            }
-
-            val sr = imageRef.child("$O_R_F_N/${candidate.name}")
-            val stream = FileInputStream(File(candidate.originalLocalBitmapPath))
-            val ut = sr.putStream(stream)
-            ut.addOnFailureListener {
-                logDebug {
-                    "Upload original error ${it.message}"
-                }
-            }.addOnSuccessListener {
-                logDebug {
-                    "Upload original done! ${it.metadata?.name}"
-                }
-                writeInDatabase(candidate.copy(needOriginalUpload = Candidate.ORIGINAL_FILE_UPLOAD_DONE))
-            }
-        } else {
-            logDebug {
-                "Upload Thumbnail ${candidate.name}"
-            }
-            val sr = imageRef.child("$T_R_F_N/${candidate.name}.jpg")
-            val bitmap = when {
-                candidate.type == Candidate.IMAGE_TYPE -> scanner.getImageThumbnail(candidate.originalLocalBitmapPath!!)
-                else -> scanner.getVideoThumbnail(candidate.originalLocalBitmapPath!!)
-            }
-            val baos = ByteArrayOutputStream()
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos)
-            val data = baos.toByteArray()
-            val uploadTask = sr.putBytes(data)
-            uploadTask.addOnCompleteListener {
-                if (it.isSuccessful) {
+        when {
+            candidate.originalStatus == Candidate.ORIGINAL_UPLOAD_NEED -> {
+                addEvent("Start upload original for ${candidate.name}")
+                val sr = imageRef.child("$O_R_F_N/${candidate.name}")
+                val stream = FileInputStream(File(candidate.originalPath))
+                val ut = sr.putStream(stream)
+                ut.addOnFailureListener {
+                    addEvent("Upload original error ${it.message}")
+                    tracker.sendEvent(TAG, events)
+                    writeInDatabase(candidate.copy(originalStatus = Candidate.ORIGINAL_UPLOAD_FAIL))
+                }.addOnSuccessListener {
                     logDebug {
-                        "Upload Successful "
+                        "Upload original done! ${it.metadata?.name}"
                     }
-                    writeInDatabase(candidate)
+                    addEvent("Upload original done! ${it.metadata?.name}")
+                    tracker.sendEvent(TAG, events)
+                    writeInDatabase(candidate.copy(originalStatus = Candidate.ORIGINAL_UPLOAD_DONE))
                 }
-            }.addOnFailureListener {
-                logDebug {
-                    "Upload fail"
+            }
+            else -> {
+                addEvent("Upload Thumbnail ${candidate.name}")
+                val sr = imageRef.child("$T_R_F_N/${candidate.name}.jpg")
+                val bitmap = when {
+                    candidate.type == Candidate.IMAGE_TYPE -> scanner.getImageThumbnail(candidate.originalPath!!)
+                    else -> scanner.getVideoThumbnail(candidate.originalPath!!)
+                }
+                val baos = ByteArrayOutputStream()
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos)
+                val data = baos.toByteArray()
+                val uploadTask = sr.putBytes(data)
+                uploadTask.addOnCompleteListener {
+                    if (it.isSuccessful) {
+                        addEvent("Upload thumbnail for ${candidate.name} is done!")
+                        tracker.sendEvent(TAG, events)
+                        writeInDatabase(candidate.copy(thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_DONE))
+                    }
+                }.addOnFailureListener {
+                    addEvent("Upload thumbnail for ${candidate.name} is fail!")
+                    tracker.sendEvent(TAG, events)
+                    writeInDatabase(candidate.copy(thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_FAIL))
                 }
             }
         }
     }
 
     private fun writeInDatabase(candidate: Candidate) {
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        currentUser ?: return
-        database.getDatabase()
-                .child(DB_T_U)
-                .child(currentUser.uid)
-                .addListenerForSingleValueEvent(object: ValueEventListener {
-                    override fun onCancelled(p0: DatabaseError) {
-                        logDebug {
-                            "User onCancelled ${p0.toException()}"
-                        }
-                    }
+        GlobalScope.launch(Dispatchers.IO) {
+            localDb.updateCandidate(candidate)
+        }
 
-                    override fun onDataChange(p0: DataSnapshot) {
-                        if (p0.getValue(User::class.java) != null) {
-                            database.writeCandidateInDatabase(currentUser.uid, candidate)
+//        val currentUser = FirebaseAuth.getInstance().currentUser
+//        currentUser ?: return
+//        database.getDatabase()
+//                .child(DB_T_U)
+//                .child(currentUser.uid)
+//                .addListenerForSingleValueEvent(object: ValueEventListener {
+//                    override fun onCancelled(p0: DatabaseError) {
+//                        logDebug {
+//                            "User onCancelled ${p0.toException()}"
+//                        }
+//                    }
+//
+//                    override fun onDataChange(p0: DataSnapshot) {
+//                        if (p0.getValue(User::class.java) != null) {
+//                            database.writeCandidateInDatabase(currentUser.uid, candidate)
+//
+//                            GlobalScope.launch(Dispatchers.IO) {
+//                                localDb.updateCandidate(candidate)
+//                            }
+//                        } else {
+//                            logDebug {
+//                                "User is null! Abort write new candidate!"
+//                            }
+//                        }
+//                    }
+//                })
+    }
 
-                            GlobalScope.launch(Dispatchers.IO) {
-                                localDb.updateCandidate(candidate)
-                            }
-                        } else {
-                            logDebug {
-                                "User is null! Abort write new candidate!"
-                            }
-                        }
-                    }
-                })
+    private fun addEvent(event: String) {
+        events.add(event)
     }
 
     companion object {
         private const val T_R_F_N = "thumbnails"
         private const val O_R_F_N = "originals"
+        private const val TAG = "UploadBitmapUtils"
     }
 }

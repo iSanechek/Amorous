@@ -26,7 +26,7 @@ class DebugAdapter(private val items: List<Candidate>) : BaseAdapter() {
             h = v.tag as ViewHolder
         }
         h.tv.text = items[position].size
-//        h.cover.setImageBitmap(ScannerUtils.getVideoThumbnail(items[position].originalLocalBitmapPath))
+//        h.cover.setImageBitmap(ScannerUtils.getVideoThumbnail(items[position].originalPath))
         return v!!
     }
 

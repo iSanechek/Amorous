@@ -1,13 +1,16 @@
 package com.anonymous.amorous.utils
 
 import com.anonymous.amorous.BuildConfig
+import com.anonymous.amorous.JOBS_SERVICE_STATUS_KEY
 import com.anonymous.amorous.R
+import com.anonymous.amorous.WORKER_RETRY_VALUE_KEY
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
 
 interface ConfigurationUtils {
     fun getWorkerRetryCount(): Int
     fun getStartJobsServiceStatus(): Boolean
+    fun getTimeForWorkerUpdate(workerKey: String): Int
 }
 
 class ConfigurationUtilsImpl : ConfigurationUtils {
@@ -26,8 +29,6 @@ class ConfigurationUtilsImpl : ConfigurationUtils {
 
     override fun getStartJobsServiceStatus(): Boolean = config.getBoolean(JOBS_SERVICE_STATUS_KEY)
 
-    companion object {
-        const val WORKER_RETRY_VALUE_KEY = "worker_retry_value"
-        const val JOBS_SERVICE_STATUS_KEY = "jobs_server_start"
-    }
+    override fun getTimeForWorkerUpdate(workerKey: String): Int = config.getLong(key).toInt()
+
 }

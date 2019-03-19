@@ -15,7 +15,6 @@ import com.anonymous.amorous.BuildConfig
 import com.anonymous.amorous.data.Candidate
 import com.anonymous.amorous.data.database.LocalDatabase
 import com.anonymous.amorous.debug.logDebug
-import com.anonymous.amorous.empty
 import com.anonymous.amorous.utils.FileUtils
 import kotlinx.coroutines.*
 import org.koin.android.ext.android.inject
@@ -157,13 +156,13 @@ class JobSchedulerService : JobSchContract, JobService() {
                                 Candidate(
                                         uid = id,
                                         name = name,
-                                        remoteCoverUrl = String.empty(),
-                                        tempLocalBitmapPath = tempPath,
-                                        needOriginalUpload = Candidate.ORIGINAL_FILE_UPLOAD_READE,
+                                        thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_NEED,
+                                        tempPath = tempPath,
+                                        originalStatus = Candidate.ORIGINAL_UPLOAD_READE,
                                         type = Candidate.IMAGE_TYPE,
                                         size = fileUtils.getFileSizeFromPath(tempPath),
-                                        originalLocalBitmapPath = dir,
-                                        needLocalBackup = Candidate.ORIGINAL_FILE_BACKUP_READE
+                                        originalPath = dir,
+                                        backupStatus = Candidate.ORIGINAL_BACKUP_READE
                                 )
                         )
                 )

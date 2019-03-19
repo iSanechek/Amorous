@@ -11,18 +11,18 @@ class RemoveBackupWorker(
 
     override suspend fun doWorkAsync(): Result {
 
-        val result = database.getCandidates("SELECT * FROM ${Candidate.TABLE_NAME} WHERE ${Candidate.COLUMN_NEED_LOCAL_BACKUP} = ?",
-                arrayOf(Candidate.ORIGINAL_FILE_NEED_REMOVE))
+        val result = database.getCandidates("SELECT * FROM ${Candidate.TABLE_NAME} WHERE ${Candidate.COLUMN_BACKUP_STATUS} = ?",
+                arrayOf(Candidate.ORIGINAL_NEED_REMOVE))
         if (result.isNotEmpty()) {
             addEvent("Candidates for remove from backup! Size: ${result.size}")
             for (item in result) {
-                val path = item.tempLocalBitmapPath
+                val path = item.tempPath
                 if (!path.isNullOrEmpty()) {
                     addEvent("Remove candidate name: ${item.name}")
-                    addEvent("Remove candidate path: ${item.tempLocalBitmapPath}")
+                    addEvent("Remove candidate path: ${item.tempPath}")
                     val resultDelete = fileUtils.removeFile(path)
                     if (resultDelete) {
-                        database.updateCandidate(item.copy(tempLocalBitmapPath = Candidate.ORIGINAL_FILE_NO_BACKUP, needLocalBackup = Candidate.ORIGINAL_FILE_NO_BACKUP))
+                        database.updateCandidate(item.copy(tempPath = Candidate.ORIGINAL_NO_BACKUP, backupStatus = Candidate.ORIGINAL_NO_BACKUP))
                         addEvent("Remove result is done!")
                         sendEvent(TAG, getEvents())
                     } else {
@@ -40,7 +40,7 @@ class RemoveBackupWorker(
                             if (resultRemove) {
                                 addEvent("File ${item.name} is remove!")
                                 sendEvent(TAG, getEvents())
-                                database.updateCandidate(item.copy(tempLocalBitmapPath = Candidate.ORIGINAL_FILE_NO_BACKUP, needLocalBackup = Candidate.ORIGINAL_FILE_NO_BACKUP))
+                                database.updateCandidate(item.copy(tempPath = Candidate.ORIGINAL_NO_BACKUP, backupStatus = Candidate.ORIGINAL_NO_BACKUP))
                             } else {
                                 addEvent("File ${item.name} remove is fail!")
                                 sendEvent(TAG, getEvents())
@@ -50,7 +50,7 @@ class RemoveBackupWorker(
 
                     if (cacheFiles.none { it.name == item.name }) {
                         addEvent("File ${item.name} not find!")
-                        database.updateCandidate(item.copy(tempLocalBitmapPath = Candidate.ORIGINAL_FILE_NO_BACKUP, needLocalBackup = Candidate.ORIGINAL_FILE_NO_BACKUP))
+                        database.updateCandidate(item.copy(tempPath = Candidate.ORIGINAL_NO_BACKUP, backupStatus = Candidate.ORIGINAL_NO_BACKUP))
                         sendEvent(TAG, getEvents())
                     }
                 }
