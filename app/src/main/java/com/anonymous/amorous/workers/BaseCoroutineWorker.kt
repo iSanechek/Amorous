@@ -4,10 +4,7 @@ import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.anonymous.amorous.data.database.LocalDatabase
-import com.anonymous.amorous.utils.ConfigurationUtils
-import com.anonymous.amorous.utils.PrefUtils
-import com.anonymous.amorous.utils.ScannerUtils
-import com.anonymous.amorous.utils.TrackingUtils
+import com.anonymous.amorous.utils.*
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import org.koin.standalone.KoinComponent
@@ -19,11 +16,13 @@ abstract class BaseCoroutineWorker(
 ) : CoroutineWorker(context, parameters), KoinComponent {
 
     private val tracker: TrackingUtils by inject()
+    private val listEvents = hashSetOf<String>()
 
     val scanner: ScannerUtils by inject()
     val database: LocalDatabase by inject()
     val pref: PrefUtils by inject()
     val configuration: ConfigurationUtils by inject()
+    val fileUtils: FileUtils by inject()
 
     override val coroutineContext: CoroutineDispatcher
         get() = Dispatchers.IO
@@ -31,15 +30,20 @@ abstract class BaseCoroutineWorker(
     override suspend fun doWork(): Result = try {
         doWorkAsync()
     } catch (e: Exception) {
-        val events = hashMapOf<String, String>()
-        events["BaseWorker"] = "Do worker error! ${e.message}"
-        sendEvent(events)
+        sendEvent("BaseWorker", hashSetOf("Do worker error! ${e.message}"))
         Result.failure()
     }
 
     abstract suspend fun doWorkAsync(): Result
 
-    fun sendEvent(events: HashMap<String, String>) {
-        tracker.sendEvent(events)
+    fun sendEvent(tag: String, events: HashSet<String>) {
+        tracker.sendEvent(tag, events)
     }
+
+    fun addEvent(event: String) {
+        listEvents.add(event)
+    }
+
+    fun getEvents(): HashSet<String> = listEvents
+
 }

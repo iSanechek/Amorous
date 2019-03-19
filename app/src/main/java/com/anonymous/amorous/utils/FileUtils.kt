@@ -15,13 +15,23 @@ interface FileUtils {
     fun getReadableFileSize(size: Long): String
     fun getFileSizeFromPath(pathFile: String): String
     fun removeFile(path: String): Boolean
+    fun getAllFilesFromCache(context: Context): Array<File>
 }
 
 class FileUtilsImpl : FileUtils {
 
-    override fun removeFile(path: String): Boolean {
+    override fun getAllFilesFromCache(context: Context): Array<File> {
+        val cache = File(getTempFolderPath(context) + File.separator)
+        return if (cache.isDirectory) cache.listFiles() else emptyArray()
+    }
 
-        return false
+    override fun removeFile(path: String): Boolean {
+        var result = false
+        val file = File(path)
+        if (file.exists()) {
+            result = file.delete()
+        }
+        return result
     }
 
     override fun getFileSizeFromPath(pathFile: String): String = getReadableFileSize(File(pathFile).length())

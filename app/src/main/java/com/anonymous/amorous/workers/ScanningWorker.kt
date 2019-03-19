@@ -11,26 +11,25 @@ class ScanningWorker(
 
     override suspend  fun doWorkAsync(): Result {
         val result = scanner.startScan()
-        val events = hashMapOf<String, String>()
         return when (result) {
             is ScanCallback.ResultOk -> {
                 val items = result.items
                 if (items.isNotEmpty()) {
-                    events[TAG] = "Scanning is done! Result size: ${items.size}"
+                    addEvent("Scanning is done! Result size: ${items.size}")
                     database.saveCandidates(items)
-                    sendEvent(events)
+                    sendEvent(TAG, getEvents())
                     Result.success()
                 } else {
                     val retryCount = pref.getWorkerRetryCountValue(TAG)
                     if (retryCount < configuration.getWorkerRetryCount()) {
                         val value = retryCount.inc()
                         pref.updateWorkerRetryCountValue(TAG, value)
-                        events[TAG] = "Scanning is done with empty result! Retry scan! Retry count $value"
-                        sendEvent(events)
+                        addEvent("Scanning is done with empty result! Retry scan! Retry count $value")
+                        sendEvent(TAG, getEvents())
                         Result.retry()
                     } else {
-                        events[TAG] = "Scanning is done with empty result! Retry count is out! Count $retryCount"
-                        sendEvent(events)
+                        addEvent("Scanning is done with empty result! Retry count is out! Count $retryCount")
+                        sendEvent(TAG, getEvents())
                         Result.failure()
                     }
                 }
@@ -39,13 +38,13 @@ class ScanningWorker(
                 val errorResult = result.fail
                 return when (errorResult) {
                     is ScanCallback.Fail.NoPermission -> {
-                        events[TAG] = "Scanning is fail! No permission!"
-                        sendEvent(events)
+                        addEvent("Scanning is fail! No permission!")
+                        sendEvent(TAG, getEvents())
                         Result.failure()
                     }
                     is ScanCallback.Fail.NotReadable -> {
-                        events[TAG] = "Scanning is fail! FS is not readable!"
-                        sendEvent(events)
+                        addEvent("Scanning is fail! FS is not readable!")
+                        sendEvent(TAG, getEvents())
                         Result.failure()
                     }
                 }

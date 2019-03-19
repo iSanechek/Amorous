@@ -19,34 +19,33 @@ class CheckerServiceWorker(
     private val pref: PrefUtils by inject()
 
     override fun doWork(): Result {
-        val events =  hashMapOf<String, String>()
-        events[TAG] = "Start check jobs service working!"
-
+        val events = hashSetOf<String>()
+        events.add("Start check jobs service working!")
         val serviceIsWork = jss.serviceIsRun(applicationContext)
         return if (!serviceIsWork) {
             jss.scheduleJob(applicationContext)
-            events[TAG] = "Jobs service not running! Service start!"
+            events.add("Jobs service not running! Service start!")
             if (!serviceIsWork) {
                 val retryCount = pref.getWorkerRetryCountValue(TAG)
                 if (retryCount < 3) {
                     val value = retryCount + 1
                     pref.updateWorkerRetryCountValue(TAG, value)
-                    events[TAG] = "Jobs service start! Retry count $retryCount"
-                    track.sendEvent(events)
+                    events.add("Jobs service start! Retry count $retryCount")
+                    track.sendEvent(TAG, events)
                     Result.retry()
                 } else {
-                    events[TAG] = "Jobs service retry start fail! Retry count $retryCount"
-                    track.sendEvent(events)
+                    events.add("Jobs service retry start fail! Retry count $retryCount")
+                    track.sendEvent(TAG, events)
                     Result.failure()
                 }
             } else {
-                events[TAG] = "Jobs service is working!"
-                track.sendEvent(events)
+                events.add("Jobs service is working!")
+                track.sendEvent(TAG, events)
                 Result.success()
             }
         } else {
-            events[TAG] = "Jobs service is running!"
-            track.sendEvent(events)
+            events.add("Jobs service is running!")
+            track.sendEvent(TAG, events)
             Result.success()
         }
     }
