@@ -1,0 +1,42 @@
+{
+  "project_info": {
+    "project_number": "595266566622",
+    "firebase_url": "https://projectt-c939b.firebaseio.com",
+    "project_id": "projectt-c939b",
+    "storage_bucket": "projectt-c939b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:595266566622:android:d26eb94c0f41e39d",
+        "android_client_info": {
+          "package_name": "com.android.camera.uses"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "595266566622-esuld6hqqh4nh27e8v0isn3skbkgm708.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAfyLky1743hwismn91htzgzkaEYJ_uQsM"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 1,
+          "other_platform_oauth_client": []
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
