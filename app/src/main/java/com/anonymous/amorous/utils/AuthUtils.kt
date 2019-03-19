@@ -7,7 +7,6 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 
 sealed class AuthCallBack {
@@ -21,7 +20,7 @@ interface AuthContract {
     fun startAuth(): AuthCallBack
 }
 class AuthUtils(
-        private val db: DatabaseContract
+        private val db: DatabaseUtils
 ) : AuthContract {
 
     override fun checkAuthState(): AuthCallBack {

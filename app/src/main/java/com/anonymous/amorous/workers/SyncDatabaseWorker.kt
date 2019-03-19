@@ -19,7 +19,10 @@ class SyncDatabaseWorker(
             sendEvent(TAG, getEvents())
             Result.retry()
         } else {
+            val iterator = cache.listIterator()
+            while (iterator.hasNext()) {
 
+            }
 
             Result.success()
         }

@@ -77,8 +77,8 @@ val appModule = module {
         DatabaseHandler(androidContext().applicationContext)
     }
 
-    factory<DatabaseContract> {
-        DatabaseUtils()
+    factory<DatabaseUtils> {
+        DatabaseUtilsImpl()
     }
 
     single<FileUtils> {

@@ -5,17 +5,16 @@ import com.anonymous.amorous.DB_T_U
 import com.anonymous.amorous.data.Candidate
 import com.anonymous.amorous.data.User
 import com.anonymous.amorous.debug.logDebug
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 
-interface DatabaseContract {
+interface DatabaseUtils {
     fun createNewUser(uid: String, user: User)
     fun getDatabase(): DatabaseReference
     fun writeCandidateInDatabase(uid: String, candidate: Candidate)
     fun getCandidates(uid: String): List<Candidate>
 }
 
-class DatabaseUtils : DatabaseContract {
+class DatabaseUtilsImpl : DatabaseUtils {
 
     private val db: DatabaseReference
         get() = FirebaseDatabase.getInstance().reference

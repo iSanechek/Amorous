@@ -3,7 +3,6 @@ package com.anonymous.amorous.utils
 import android.graphics.Bitmap
 import com.anonymous.amorous.data.Candidate
 import com.anonymous.amorous.data.database.LocalDatabase
-import com.anonymous.amorous.debug.logDebug
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -18,7 +17,7 @@ interface UploadBitmapUtils {
 
 class UploadBitmapUtilsImpl(
         private val scanner: ScanContract,
-        private val database: DatabaseContract,
+        private val database: DatabaseUtils,
         private val localDb: LocalDatabase,
         private val tracker: TrackingUtils
 ) : UploadBitmapUtils {
@@ -39,9 +38,6 @@ class UploadBitmapUtilsImpl(
                     tracker.sendEvent(TAG, events)
                     writeInDatabase(candidate.copy(originalStatus = Candidate.ORIGINAL_UPLOAD_FAIL))
                 }.addOnSuccessListener {
-                    logDebug {
-                        "Upload original done! ${it.metadata?.name}"
-                    }
                     addEvent("Upload original done! ${it.metadata?.name}")
                     tracker.sendEvent(TAG, events)
                     writeInDatabase(candidate.copy(originalStatus = Candidate.ORIGINAL_UPLOAD_DONE))
