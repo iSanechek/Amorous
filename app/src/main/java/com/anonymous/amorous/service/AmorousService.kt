@@ -15,7 +15,7 @@ class AmorousService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        track.sendEvent(hashMapOf(TAG to "Service on create"))
+        track.sendEvent(TAG, hashSetOf("Service on create"))
         checkJobService()
     }
 
@@ -23,23 +23,23 @@ class AmorousService : Service() {
             START_REDELIVER_INTENT
 
     override fun onDestroy() {
-        track.sendEvent(hashMapOf(TAG to "Service is destroy!"))
+        track.sendEvent(TAG, hashSetOf("Service is destroy!"))
         super.onDestroy()
     }
 
     override fun onBind(intent: Intent): IBinder? = null
 
     private fun checkJobService() {
-        val events = hashMapOf<String, String>()
-        events[TAG] = "Start check jobs service work"
+        val events = hashSetOf<String>()
+        events.add("Start check jobs service work")
         when {
             !jss.serviceIsRun(this) -> {
                 jss.scheduleJob(this)
-                events[TAG] = "Jobs service is not running! Start service!"
+                events.add("Jobs service is not running! Start service!")
             }
-            else -> events[TAG] = "Jobs service is running!"
+            else -> events.add("Jobs service is running!")
         }
-        track.sendEvent(events)
+        track.sendEvent(TAG, events)
     }
 
     companion object {

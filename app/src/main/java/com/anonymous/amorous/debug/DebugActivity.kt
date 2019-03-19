@@ -9,6 +9,7 @@ import com.anonymous.amorous.data.database.LocalDatabase
 import com.anonymous.amorous.service.AmorousService
 import com.anonymous.amorous.service.JobSchContract
 import com.anonymous.amorous.utils.ActionContract
+import com.anonymous.amorous.utils.FileUtils
 import kotlinx.android.synthetic.main.debug_layout.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -21,28 +22,48 @@ class DebugActivity : AppCompatActivity() {
     private val action: ActionContract by inject()
     private val s: JobSchContract by inject()
     private val db: LocalDatabase by inject()
+    private val files: FileUtils by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.debug_layout)
 
-        s.scheduleJob(this)
+//        s.scheduleJob(this)
 
-//        GlobalScope.launch(Dispatchers.IO) {
-//            db.saveCandidates(listOf(
-//                    Candidate(
-//                            uid = 101,
-//                            needLocalBackup = "",
-//                            originalLocalBitmapPath = "",
-//                            size = "256kb",
-//                            type = "image",
-//                            needOriginalUpload = "",
-//                            tempLocalBitmapPath = "",
-//                            remoteCoverUrl = "",
-//                            name = "Vasi"
-//                    )
-//            ))
-//        }
+        val r = files.getAllFilesFromCache(this)
+        logDebug {
+            "Cache files size: ${r.size}"
+        }
+
+        for (file in r) {
+            logDebug {
+                "File name ${file.name}"
+            }
+
+        }
+
+        if (r.isNotEmpty()) {
+            val f = r[0]
+            logDebug {
+                "File name ${f.name}"
+            }
+            if (files.removeFile(f.absolutePath)) {
+                logDebug {
+                    "Remove!!!!"
+                }
+            } else {
+                logDebug {
+                    "Remove fail!"
+                }
+            }
+        }
+
+        for (file in r) {
+            logDebug {
+                "File name ${file.name}"
+            }
+
+        }
 
         debug_start.setOnClickListener {
             GlobalScope.launch(Dispatchers.Main) {
