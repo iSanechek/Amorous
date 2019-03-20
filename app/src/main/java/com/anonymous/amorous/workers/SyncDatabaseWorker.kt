@@ -3,11 +3,15 @@ package com.anonymous.amorous.workers
 import android.content.Context
 import androidx.work.WorkerParameters
 import com.anonymous.amorous.data.Candidate
+import com.anonymous.amorous.utils.UploadBitmapUtils
+import org.koin.standalone.inject
 
 class SyncDatabaseWorker(
         appContext: Context,
         workerParams: WorkerParameters
 ) : BaseCoroutineWorker(appContext, workerParams) {
+
+    private val upload: UploadBitmapUtils by inject()
 
     override suspend fun doWorkAsync(): Result {
         val cache = database.getCandidates("SELECT * FROM ${Candidate.TABLE_NAME} " +
@@ -19,10 +23,10 @@ class SyncDatabaseWorker(
             sendEvent(TAG, getEvents())
             Result.retry()
         } else {
-            val iterator = cache.listIterator()
-            while (iterator.hasNext()) {
 
-            }
+
+
+
 
             Result.success()
         }
