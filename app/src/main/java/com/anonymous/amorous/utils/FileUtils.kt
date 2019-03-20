@@ -1,27 +1,57 @@
 package com.anonymous.amorous.utils
 
 import android.content.Context
-import com.anonymous.amorous.debug.logDebug
 import com.anonymous.amorous.empty
 import java.io.File
 import java.text.DecimalFormat
 
 interface FileUtils {
-    fun checkTempFolder(context: Context): Boolean
-    fun getRootTempFolder(context: Context): String
-    fun copyToTempFolder(context: Context, originalPath: String): String
+    fun checkCreatedCacheFolder(context: Context): Boolean
+    fun getRootCacheFolder(context: Context): String
+    fun copyToCacheFolder(context: Context, originalPath: String): String
     fun getFileType(fileName: String): String
-    fun parseFilenameFromPath(filePath: String): String
+    fun parseFileNameFromPath(filePath: String): String
     fun getReadableFileSize(size: Long): String
     fun getFileSizeFromPath(pathFile: String): String
     fun removeFile(path: String): Boolean
-    fun getAllFilesFromCache(context: Context): Array<File>
+    fun getAllFilesFromCacheFolder(context: Context): Array<File>
+    fun checkCacheFolderIsEmpty(context: Context): Boolean
+    fun getCheckFileExists(path: String): Boolean
+    fun clearCacheFolder(context: Context): Boolean
+    fun getCacheFolderSize(context: Context): Long
+    fun getTotalFreeSpace(context: Context): Long
 }
 
-class FileUtilsImpl : FileUtils {
+class FileUtilsImpl(private val tracker: TrackingUtils) : FileUtils {
 
-    override fun getAllFilesFromCache(context: Context): Array<File> {
-        val cache = File(getTempFolderPath(context) + File.separator)
+    override fun getTotalFreeSpace(context: Context): Long = File(getCacheFolderPath(context)).usableSpace
+
+    override fun getCacheFolderSize(context: Context): Long = getFolderSize(File(getCacheFolderPath(context)))
+
+    override fun clearCacheFolder(context: Context): Boolean = File(getCacheFolderPath(context)).deleteRecursively()
+
+    override fun checkCacheFolderIsEmpty(context: Context): Boolean {
+        var empty = false
+        if (checkCreatedCacheFolder(context)) {
+            empty = File(getCacheFolderPath(context)).usableSpace == 0L
+        }
+        return empty
+    }
+
+    override fun getCheckFileExists(path: String): Boolean {
+        val file = File(path)
+        var exists = file.exists()
+        if (exists) {
+            if (file.length() == 0L) {
+                removeFile(path)
+                exists = false
+            }
+        }
+        return exists
+    }
+
+    override fun getAllFilesFromCacheFolder(context: Context): Array<File> {
+        val cache = File(getCacheFolderPath(context) + File.separator)
         return if (cache.isDirectory) cache.listFiles() else emptyArray()
     }
 
@@ -43,10 +73,7 @@ class FileUtilsImpl : FileUtils {
         return DecimalFormat("#,##0.#").format(size / Math.pow(1024.0, digitGroups.toDouble())) + " " + units[digitGroups]
     }
 
-    override fun parseFilenameFromPath(filePath: String): String {
-        val index = filePath.lastIndexOf('/') + 1
-        return filePath.substring(index)
-    }
+    override fun parseFileNameFromPath(filePath: String): String = File(filePath).nameWithoutExtension
 
     override fun getFileType(fileName: String): String = when {
                 fileName.endsWith(".jpg", ignoreCase = true) -> "image"
@@ -54,39 +81,54 @@ class FileUtilsImpl : FileUtils {
                 else -> "unknown"
             }
 
-    override fun copyToTempFolder(context: Context, originalPath: String): String {
-        try {
-            val distFile = File(getTempFolderPath(context), originalPath.substring(originalPath.lastIndexOf("/") + 1))
-            File(originalPath).copyTo(target = distFile, overwrite = true)
-            return distFile.absolutePath
 
+    override fun copyToCacheFolder(context: Context, originalPath: String): String {
+        val events = hashSetOf<String>()
+        return try {
+            events.add("Copy file! Original path: $originalPath")
+            val distFile = File(getCacheFolderPath(context), originalPath.substring(originalPath.lastIndexOf("/") + 1))
+            File(originalPath).copyTo(target = distFile, overwrite = true)
+            val resultPath = distFile.absolutePath
+            events.add("Copy file is done! Copy file path: $resultPath")
+            tracker.sendEvent(TAG, events)
+            resultPath
         } catch (e: Exception) {
-            logDebug {
-                "copyToTempFolder error ${e.message}"
-            }
+            events.add("Copy file error! ${e.message}")
+            tracker.sendEvent(TAG, events)
+            String.empty()
         }
-        return String.empty()
     }
 
-    override fun getRootTempFolder(context: Context): String = getRootTempFolder(context)
+    override fun getRootCacheFolder(context: Context): String = getRootCacheFolder(context)
 
-    override fun checkTempFolder(context: Context): Boolean {
+    override fun checkCreatedCacheFolder(context: Context): Boolean {
         var isOk: Boolean
-        val dir = File(getTempFolderPath(context))
+        val dir = File(getCacheFolderPath(context))
         isOk = dir.exists()
         when {
             !isOk -> isOk = dir.mkdirs()
         }
-        val nomedia = File(getTempFolderPath(context) + File.separator + ".nomedia")
+        val nomedia = File(getCacheFolderPath(context) + File.separator + ".nomedia")
         when {
             !nomedia.exists() -> nomedia.mkdirs()
         }
         return isOk
     }
 
-    private fun getTempFolderPath(context: Context): String = context.filesDir.absolutePath + File.separator + CACHE_FOLDER_NAME
+    private fun getCacheFolderPath(context: Context): String = context.filesDir.absolutePath + File.separator + CACHE_FOLDER_NAME
+
+    private fun getFolderSize(file: File): Long = file
+            .listFiles()
+            .asSequence()
+            .map {
+                when {
+                    it.isFile -> it.length()
+                    else -> getFolderSize(it)
+                }
+            }.sum()
 
     companion object {
         const val CACHE_FOLDER_NAME = "cachefiles"
+        private const val TAG = "FileUtils"
     }
 }

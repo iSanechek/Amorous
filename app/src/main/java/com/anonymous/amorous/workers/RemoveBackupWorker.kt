@@ -31,7 +31,7 @@ class RemoveBackupWorker(
                     }
                 } else {
                     addEvent("Path for ${item.name} is empty or null!")
-                    val cacheFiles = fileUtils.getAllFilesFromCache(applicationContext)
+                    val cacheFiles = fileUtils.getAllFilesFromCacheFolder(applicationContext)
                     addEvent("All file from size: ${cacheFiles.size}")
                     for (file in cacheFiles) {
                         if (file.name == item.name) {

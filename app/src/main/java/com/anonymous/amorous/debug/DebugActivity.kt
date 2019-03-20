@@ -11,10 +11,6 @@ import com.anonymous.amorous.service.JobSchContract
 import com.anonymous.amorous.utils.ActionContract
 import com.anonymous.amorous.utils.FileUtils
 import kotlinx.android.synthetic.main.debug_layout.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.koin.android.ext.android.inject
 
 class DebugActivity : AppCompatActivity() {
@@ -28,59 +24,54 @@ class DebugActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.debug_layout)
 
-//        s.scheduleJob(this)
 
-        val r = files.getAllFilesFromCache(this)
-        logDebug {
-            "Cache files size: ${r.size}"
+
+
+        if (files.checkCreatedCacheFolder(this)) {
+            log("Cache folder create or created!")
+        } else {
+            log("Cache folder not create!")
         }
 
-        for (file in r) {
-            logDebug {
-                "File name ${file.name}"
-            }
+        log("Cache folder is empty ${files.checkCacheFolderIsEmpty(this)}")
 
-        }
+        log("Cache folder size ${files.getReadableFileSize(files.getCacheFolderSize(this))}")
 
-        if (r.isNotEmpty()) {
-            val f = r[0]
-            logDebug {
-                "File name ${f.name}"
-            }
-            if (files.removeFile(f.absolutePath)) {
-                logDebug {
-                    "Remove!!!!"
-                }
-            } else {
-                logDebug {
-                    "Remove fail!"
-                }
-            }
-        }
-
-        for (file in r) {
-            logDebug {
-                "File name ${file.name}"
-            }
-
-        }
+        val items = files.getAllFilesFromCacheFolder(this)
+        log("Size ${items.size}")
+//        if (items.isNotEmpty()) {
+//            for (i in 0 until items.size) {
+//                val file = items[i]
+//                log("File name ${file.name}")
+//
+//                if (files.getCheckFileExists(file.absolutePath)) {
+//                    log("File ${file.name} exists")
+//                } else log("File ${file.name} not exists")
+//
+//                log("File ${file.name} size ${files.getFileSizeFromPath(file.absolutePath)}")
+//
+//                if (i == i % 2) {
+//                    val name = file.name
+//                    val path = file.absolutePath
+//                    if (files.removeFile(path)) {
+//                        log("Remove file $name")
+//                        if (files.getCheckFileExists(path)) {
+//                            log("File $name not exists")
+//                        } else log("File $name not exists")
+//                    } else log("File $name not remove")
+//                }
+//            }
+//        }
+//
+//        if (files.clearCacheFolder(this)) {
+//            log("Clear cache folder")
+//        } else {
+//            log("Not clear cache folder")
+//        }
+//        log("Cache folder size ${files.getReadableFileSize(files.getCacheFolderSize(this))}")
 
         debug_start.setOnClickListener {
-            GlobalScope.launch(Dispatchers.Main) {
-                val items = withContext(Dispatchers.IO) { db.getCandidates() }
-                log("Items size ${items.size}")
-                items.forEach { item ->
-                    logDebug {
-                        "Candidate id ${item.uid} \n" +
-                                "Candidate name ${item.name} \n" +
-                                "Candidate original path ${item.originalPath} \n" +
-                                "Candidate size ${item.size} \n" +
-                                "Candidate temp path ${item.tempPath} \n" +
-                                "Candidate type ${item.type}\n" +
-                                "========================="
-                    }
-                }
-            }
+            s.scheduleJob(this)
         }
     }
 
@@ -90,6 +81,6 @@ class DebugActivity : AppCompatActivity() {
 
     private fun log(msg: String) {
         Log.e("DebugA", msg)
-        debug_info.text = msg
+//        debug_info.text = msg
     }
 }

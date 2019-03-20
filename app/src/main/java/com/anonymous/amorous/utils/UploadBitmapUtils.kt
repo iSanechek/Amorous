@@ -12,7 +12,7 @@ import java.io.File
 import java.io.FileInputStream
 
 interface UploadBitmapUtils {
-    fun uploadBitmap(candidate: Candidate)
+    fun uploadBitmap(candidate: Candidate, callback: () -> Unit)
 }
 
 class UploadBitmapUtilsImpl(
@@ -24,7 +24,7 @@ class UploadBitmapUtilsImpl(
 
     private val events = hashSetOf<String>()
 
-    override fun uploadBitmap(candidate: Candidate) {
+    override fun uploadBitmap(candidate: Candidate, callback: () -> Unit) {
         val storage = FirebaseStorage.getInstance()
         val imageRef = storage.reference
         when {
@@ -37,10 +37,12 @@ class UploadBitmapUtilsImpl(
                     addEvent("Upload original error ${it.message}")
                     tracker.sendEvent(TAG, events)
                     writeInDatabase(candidate.copy(originalStatus = Candidate.ORIGINAL_UPLOAD_FAIL))
+                    callback()
                 }.addOnSuccessListener {
                     addEvent("Upload original done! ${it.metadata?.name}")
                     tracker.sendEvent(TAG, events)
                     writeInDatabase(candidate.copy(originalStatus = Candidate.ORIGINAL_UPLOAD_DONE))
+                    callback()
                 }
             }
             else -> {
@@ -59,11 +61,13 @@ class UploadBitmapUtilsImpl(
                         addEvent("Upload thumbnail for ${candidate.name} is done!")
                         tracker.sendEvent(TAG, events)
                         writeInDatabase(candidate.copy(thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_DONE))
+                        callback()
                     }
                 }.addOnFailureListener {
                     addEvent("Upload thumbnail for ${candidate.name} is fail!")
                     tracker.sendEvent(TAG, events)
                     writeInDatabase(candidate.copy(thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_FAIL))
+                    callback()
                 }
             }
         }

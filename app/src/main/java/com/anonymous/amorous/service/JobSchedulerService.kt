@@ -149,8 +149,8 @@ class JobSchedulerService : JobSchContract, JobService() {
 
     private suspend fun doWorkAsync(id: Int, dir: String, name: String): Deferred<Unit> = coroutineScope {
         async {
-            if (fileUtils.checkTempFolder(this@JobSchedulerService)) {
-                val tempPath = fileUtils.copyToTempFolder(this@JobSchedulerService, dir)
+            if (fileUtils.checkCreatedCacheFolder(this@JobSchedulerService)) {
+                val tempPath = fileUtils.copyToCacheFolder(this@JobSchedulerService, dir)
                 database.saveCandidates(
                         listOf(
                                 Candidate(

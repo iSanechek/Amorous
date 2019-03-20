@@ -29,6 +29,6 @@ class ConfigurationUtilsImpl : ConfigurationUtils {
 
     override fun getStartJobsServiceStatus(): Boolean = config.getBoolean(JOBS_SERVICE_STATUS_KEY)
 
-    override fun getTimeForWorkerUpdate(workerKey: String): Int = config.getLong(key).toInt()
+    override fun getTimeForWorkerUpdate(workerKey: String): Int = config.getLong(workerKey).toInt()
 
 }

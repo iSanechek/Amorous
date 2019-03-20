@@ -82,6 +82,8 @@ val appModule = module {
     }
 
     single<FileUtils> {
-        FileUtilsImpl()
+        FileUtilsImpl(
+                get()
+        )
     }
 }
