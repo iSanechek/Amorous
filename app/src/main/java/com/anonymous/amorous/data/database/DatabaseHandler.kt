@@ -31,7 +31,7 @@ interface LocalDatabase {
 
 }
 
-class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(context, "candidate.db", null, 2) {
+class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(context, "candidate.db", null, 3) {
 
     override suspend fun saveEvent(event: Event) {
         val db = this@DatabaseHandler.writableDatabase
