@@ -13,7 +13,7 @@ import com.anonymous.amorous.debug.logDebug
 
 interface LocalDatabase {
     suspend fun saveCandidates(items: List<Candidate>)
-    suspend fun updateCandidate(item: Candidate)
+    fun updateCandidate(item: Candidate)
     suspend fun getCandidates(): List<Candidate>
     suspend fun getCandidate(id: Int): Candidate
     suspend fun clearDb()
@@ -148,7 +148,7 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
         db.close()
     }
 
-    override suspend fun updateCandidate(item: Candidate) {
+    override fun updateCandidate(item: Candidate) {
         val db = this@DatabaseHandler.writableDatabase
         val v = getCvFromCandidate(item, true)
         db.transaction {

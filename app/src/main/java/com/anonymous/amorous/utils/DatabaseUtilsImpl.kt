@@ -36,8 +36,6 @@ class DatabaseUtilsImpl : RemoteDatabaseUtils {
         }
 
 
-
-
         val key = db.child(DB_T_C).push().key
         logDebug {
             "KEY $key"

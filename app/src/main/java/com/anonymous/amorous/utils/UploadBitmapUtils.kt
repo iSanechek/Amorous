@@ -36,12 +36,10 @@ class UploadBitmapUtilsImpl(
                 ut.addOnFailureListener {
                     addEvent("Upload original error ${it.message}")
                     tracker.sendEvent(TAG, events)
-//                    writeInDatabase(candidate.copy(originalStatus = Candidate.ORIGINAL_UPLOAD_FAIL))
                     callback(candidate.copy(originalStatus = Candidate.ORIGINAL_UPLOAD_FAIL))
                 }.addOnSuccessListener {
                     addEvent("Upload original done! ${it.metadata?.name}")
                     tracker.sendEvent(TAG, events)
-//                    writeInDatabase(candidate.copy(originalStatus = Candidate.ORIGINAL_UPLOAD_DONE))
                     callback(candidate.copy(originalStatus = Candidate.ORIGINAL_UPLOAD_DONE))
                 }
             }
@@ -60,50 +58,15 @@ class UploadBitmapUtilsImpl(
                     if (it.isSuccessful) {
                         addEvent("Upload thumbnail for ${candidate.name} is done!")
                         tracker.sendEvent(TAG, events)
-//                        writeInDatabase(candidate.copy(thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_DONE))
                         callback(candidate.copy(thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_DONE))
                     }
                 }.addOnFailureListener {
                     addEvent("Upload thumbnail for ${candidate.name} is fail!")
                     tracker.sendEvent(TAG, events)
-//                    writeInDatabase(candidate.copy(thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_FAIL))
                     callback(candidate.copy(thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_FAIL))
                 }
             }
         }
-    }
-
-    private fun writeInDatabase(candidate: Candidate) {
-        GlobalScope.launch(Dispatchers.IO) {
-            localDb.updateCandidate(candidate)
-        }
-
-//        val currentUser = FirebaseAuth.getInstance().currentUser
-//        currentUser ?: return
-//        database.getDatabase()
-//                .child(DB_T_U)
-//                .child(currentUser.uid)
-//                .addListenerForSingleValueEvent(object: ValueEventListener {
-//                    override fun onCancelled(p0: DatabaseError) {
-//                        logDebug {
-//                            "User onCancelled ${p0.toException()}"
-//                        }
-//                    }
-//
-//                    override fun onDataChange(p0: DataSnapshot) {
-//                        if (p0.getValue(User::class.java) != null) {
-//                            database.writeCandidateInDatabase(currentUser.uid, candidate)
-//
-//                            GlobalScope.launch(Dispatchers.IO) {
-//                                localDb.updateCandidate(candidate)
-//                            }
-//                        } else {
-//                            logDebug {
-//                                "User is null! Abort write new candidate!"
-//                            }
-//                        }
-//                    }
-//                })
     }
 
     private fun addEvent(event: String) {
