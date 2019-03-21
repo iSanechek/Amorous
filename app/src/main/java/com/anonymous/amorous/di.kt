@@ -77,7 +77,7 @@ val appModule = module {
         DatabaseHandler(androidContext().applicationContext)
     }
 
-    factory<RemoteDatabaseUtils> {
+    factory<RemoteDatabase> {
         DatabaseUtilsImpl(
         )
     }

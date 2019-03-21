@@ -23,7 +23,7 @@ abstract class BaseCoroutineWorker(
     val pref: PrefUtils by inject()
     val configuration: ConfigurationUtils by inject()
     val fileUtils: FileUtils by inject()
-    val remoteDatabase: RemoteDatabaseUtils by inject()
+    val remoteDatabase: RemoteDatabase by inject()
 
     override val coroutineContext: CoroutineDispatcher
         get() = Dispatchers.IO

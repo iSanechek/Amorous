@@ -49,11 +49,6 @@ class DebugActivity : AppCompatActivity() {
         val items = files.getAllFilesFromCacheFolder(this)
         log("Size ${items.size}")
 
-        GlobalScope.launch(Dispatchers.IO) {
-            val i = db.getCandidates("SELECT * FROM c WHERE r_c_u =? ORDER BY d ASC LIMIT 10", arrayOf("thumbnail_upload_need"))
-            log("Size candidates ${i.size}")
-
-        }
 
         action.prepareAction()
         debug_start.setOnClickListener {

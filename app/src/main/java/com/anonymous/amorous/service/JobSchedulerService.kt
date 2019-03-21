@@ -19,13 +19,6 @@ import com.anonymous.amorous.utils.FileUtils
 import kotlinx.coroutines.*
 import org.koin.android.ext.android.inject
 
-interface JobSchContract {
-    fun scheduleJob(context: Context)
-    fun a(context: Context): Int
-    fun serviceIsRun(context: Context): Boolean
-    fun cancelJob(context: Context)
-}
-
 class JobSchedulerService : JobSchContract, JobService() {
 
     private val fileUtils: FileUtils by inject()

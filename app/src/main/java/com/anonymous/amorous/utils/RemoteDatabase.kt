@@ -9,14 +9,14 @@ import com.anonymous.amorous.empty
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 
-interface RemoteDatabaseUtils {
+interface RemoteDatabase {
     fun createNewUser(uid: String, user: User)
     fun getDatabase(): DatabaseReference
     fun writeCandidateInDatabase(uid: String, candidate: Candidate)
-    fun getCandidates(uid: String): List<Candidate>
+    fun userUid(): String
 }
 
-class DatabaseUtilsImpl : RemoteDatabaseUtils {
+class DatabaseUtilsImpl : RemoteDatabase {
 
     private val db: DatabaseReference
         get() = FirebaseDatabase.getInstance().reference
@@ -49,10 +49,5 @@ class DatabaseUtilsImpl : RemoteDatabaseUtils {
         db.updateChildren(childUpdates)
     }
 
-    override fun getCandidates(uid: String): List<Candidate> {
-        val temp = mutableListOf<Candidate>()
-
-
-        return temp
-    }
+    override fun userUid(): String = userUid
 }

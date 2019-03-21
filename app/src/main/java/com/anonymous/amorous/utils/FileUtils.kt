@@ -73,7 +73,7 @@ class FileUtilsImpl(private val tracker: TrackingUtils) : FileUtils {
         return DecimalFormat("#,##0.#").format(size / Math.pow(1024.0, digitGroups.toDouble())) + " " + units[digitGroups]
     }
 
-    override fun parseFileNameFromPath(filePath: String): String = File(filePath).nameWithoutExtension
+    override fun parseFileNameFromPath(filePath: String): String = File(filePath).name
 
     override fun getFileType(fileName: String): String = when {
                 fileName.endsWith(".jpg", ignoreCase = true) -> "image"

@@ -20,7 +20,7 @@ interface AuthContract {
     fun startAuth(): AuthCallBack
 }
 class AuthUtils(
-        private val db: RemoteDatabaseUtils
+        private val db: RemoteDatabase
 ) : AuthContract {
 
     override fun checkAuthState(): AuthCallBack {

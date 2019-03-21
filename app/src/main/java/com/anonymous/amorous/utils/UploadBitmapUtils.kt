@@ -4,9 +4,6 @@ import android.graphics.Bitmap
 import com.anonymous.amorous.data.Candidate
 import com.anonymous.amorous.data.database.LocalDatabase
 import com.google.firebase.storage.FirebaseStorage
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileInputStream
@@ -17,7 +14,7 @@ interface UploadBitmapUtils {
 
 class UploadBitmapUtilsImpl(
         private val scanner: ScanContract,
-        private val database: RemoteDatabaseUtils,
+        private val database: RemoteDatabase,
         private val localDb: LocalDatabase,
         private val tracker: TrackingUtils
 ) : UploadBitmapUtils {

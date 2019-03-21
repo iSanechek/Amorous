@@ -12,28 +12,37 @@ import com.anonymous.amorous.data.Task
 import com.anonymous.amorous.debug.logDebug
 
 interface LocalDatabase {
-    suspend fun saveCandidates(items: List<Candidate>)
+    fun saveCandidates(items: List<Candidate>)
+    fun saveCandidate(candidate: Candidate)
     fun updateCandidate(item: Candidate)
-    suspend fun getCandidates(): List<Candidate>
-    suspend fun getCandidate(id: Int): Candidate
-    suspend fun clearDb()
-    suspend fun getCandidates(select: String, args: Array<String>?): List<Candidate>
+    fun getCandidates(): List<Candidate>
+    fun getCandidate(id: Int): Candidate
+    fun clearDb()
+    fun getCandidates(select: String, args: Array<String>?): List<Candidate>
 
-    suspend fun saveEvent(event: Event)
-    suspend fun getEvent(id: String): Event
-    suspend fun updateEvent(event: Event)
-    suspend fun clearEvents()
+    fun saveEvent(event: Event)
+    fun getEvent(id: String): Event
+    fun updateEvent(event: Event)
+    fun clearEvents()
 
-    suspend fun saveTask(task: Task)
-    suspend fun getTasks(): List<Task>
-    suspend fun getTask(id: String): Task
-    suspend fun removeTask(id: String)
+    fun saveTask(task: Task)
+    fun getTasks(): List<Task>
+    fun getTask(id: String): Task
+    fun removeTask(id: String)
 
 }
 
 class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(context, "candidate.db", null, 3) {
 
-    override suspend fun saveEvent(event: Event) {
+    override fun saveCandidate(candidate: Candidate) {
+        val db = this@DatabaseHandler.writableDatabase
+        db.transaction {
+            insert(Candidate.TABLE_NAME, null, getCvFromCandidate(candidate))
+        }
+        db.close()
+    }
+
+    override fun saveEvent(event: Event) {
         val db = this@DatabaseHandler.writableDatabase
         db.transaction {
             insert(Event.TABLE_NAME, null, getCvFromEvent(event))
@@ -41,7 +50,7 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
         db.close()
     }
 
-    override suspend fun getEvent(id: String): Event {
+    override fun getEvent(id: String): Event {
         val db = this@DatabaseHandler.writableDatabase
         val select = "SELECT * FROM ${Event.TABLE_NAME} WHERE ${Event.COLUMN_ID} = $id"
         val c = db.rawQuery(select, null)
@@ -52,7 +61,7 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
         return event
     }
 
-    override suspend fun updateEvent(event: Event) {
+    override fun updateEvent(event: Event) {
         val db = this@DatabaseHandler.writableDatabase
         val v = getCvFromEvent(event, true)
         db.transaction {
@@ -61,7 +70,7 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
         db.close()
     }
 
-    override suspend fun clearEvents() {
+    override fun clearEvents() {
         val db = this@DatabaseHandler.writableDatabase
         db.transaction {
             delete(Event.TABLE_NAME, null, null)
@@ -69,7 +78,7 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
         db.close()
     }
 
-    override suspend fun saveTask(task: Task) {
+    override fun saveTask(task: Task) {
         val db = this@DatabaseHandler.writableDatabase
         db.transaction {
             insert(Task.TABLE_NAME, null, getCvFromTask(task))
@@ -77,7 +86,7 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
         db.close()
     }
 
-    override suspend fun getTasks(): List<Task> {
+    override fun getTasks(): List<Task> {
         val temp = mutableListOf<Task>()
         val db = this@DatabaseHandler.writableDatabase
         val select = "SELECT * FROM ${Task.TABLE_NAME}"
@@ -94,7 +103,7 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
         return temp
     }
 
-    override suspend fun getTask(id: String): Task {
+    override fun getTask(id: String): Task {
         val db = this@DatabaseHandler.writableDatabase
         val select = "SELECT * FROM ${Task.TABLE_NAME} WHERE ${Task.COLUMN_ID} = $id"
         val c = db.rawQuery(select, null)
@@ -105,7 +114,7 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
         return task
     }
 
-    override suspend fun removeTask(id: String) {
+    override fun removeTask(id: String) {
         val db = this@DatabaseHandler.writableDatabase
         db.transaction {
             delete(Task.TABLE_NAME, "${Task.COLUMN_ID} =?", arrayOf(id))
@@ -113,7 +122,7 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
         db.close()
     }
 
-    override suspend fun saveCandidates(items: List<Candidate>) {
+    override fun saveCandidates(items: List<Candidate>) {
         val count = getCount()
         val cacheItems = getCandidates()
         val db = this@DatabaseHandler.writableDatabase
@@ -157,9 +166,9 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
         db.close()
     }
 
-    override suspend fun getCandidates(): List<Candidate> = getCandidates("SELECT * FROM ${Candidate.TABLE_NAME}", null)
+    override fun getCandidates(): List<Candidate> = getCandidates("SELECT * FROM ${Candidate.TABLE_NAME}", null)
 
-    override suspend fun getCandidates(select: String, args: Array<String>?): List<Candidate> {
+    override fun getCandidates(select: String, args: Array<String>?): List<Candidate> {
         val temp = mutableListOf<Candidate>()
         val db = this@DatabaseHandler.writableDatabase
         val c = db.rawQuery(select, args)
@@ -175,7 +184,7 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
         return temp
     }
 
-    override suspend fun getCandidate(id: Int): Candidate {
+    override fun getCandidate(id: Int): Candidate {
         val db = this@DatabaseHandler.writableDatabase
         val s = "SELECT * FROM ${Candidate.TABLE_NAME} WHERE ${Candidate.COLUMN_UID} = $id"
         val c = db.rawQuery(s, null)
@@ -186,7 +195,7 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
         return item
     }
 
-    override suspend fun clearDb() {
+    override fun clearDb() {
         val db = this@DatabaseHandler.writableDatabase
         db.transaction {
             delete(Candidate.TABLE_NAME, null, null)
