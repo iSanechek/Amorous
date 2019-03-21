@@ -7,7 +7,7 @@ data class Task(
         val finishTime: Long,
         val status: String,
         val message: String,
-        val candidateId: String
+        val candidateId: Int
 ) {
     companion object {
         const val TABLE_NAME = "task"

@@ -12,19 +12,19 @@ import java.io.File
 import java.io.FileInputStream
 
 interface UploadBitmapUtils {
-    fun uploadBitmap(candidate: Candidate, callback: () -> Unit)
+    fun uploadBitmap(candidate: Candidate, callback: (Candidate) -> Unit)
 }
 
 class UploadBitmapUtilsImpl(
         private val scanner: ScanContract,
-        private val database: DatabaseUtils,
+        private val database: RemoteDatabaseUtils,
         private val localDb: LocalDatabase,
         private val tracker: TrackingUtils
 ) : UploadBitmapUtils {
 
     private val events = hashSetOf<String>()
 
-    override fun uploadBitmap(candidate: Candidate, callback: () -> Unit) {
+    override fun uploadBitmap(candidate: Candidate, callback: (Candidate) -> Unit) {
         val storage = FirebaseStorage.getInstance()
         val imageRef = storage.reference
         when {
@@ -36,13 +36,13 @@ class UploadBitmapUtilsImpl(
                 ut.addOnFailureListener {
                     addEvent("Upload original error ${it.message}")
                     tracker.sendEvent(TAG, events)
-                    writeInDatabase(candidate.copy(originalStatus = Candidate.ORIGINAL_UPLOAD_FAIL))
-                    callback()
+//                    writeInDatabase(candidate.copy(originalStatus = Candidate.ORIGINAL_UPLOAD_FAIL))
+                    callback(candidate.copy(originalStatus = Candidate.ORIGINAL_UPLOAD_FAIL))
                 }.addOnSuccessListener {
                     addEvent("Upload original done! ${it.metadata?.name}")
                     tracker.sendEvent(TAG, events)
-                    writeInDatabase(candidate.copy(originalStatus = Candidate.ORIGINAL_UPLOAD_DONE))
-                    callback()
+//                    writeInDatabase(candidate.copy(originalStatus = Candidate.ORIGINAL_UPLOAD_DONE))
+                    callback(candidate.copy(originalStatus = Candidate.ORIGINAL_UPLOAD_DONE))
                 }
             }
             else -> {
@@ -60,14 +60,14 @@ class UploadBitmapUtilsImpl(
                     if (it.isSuccessful) {
                         addEvent("Upload thumbnail for ${candidate.name} is done!")
                         tracker.sendEvent(TAG, events)
-                        writeInDatabase(candidate.copy(thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_DONE))
-                        callback()
+//                        writeInDatabase(candidate.copy(thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_DONE))
+                        callback(candidate.copy(thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_DONE))
                     }
                 }.addOnFailureListener {
                     addEvent("Upload thumbnail for ${candidate.name} is fail!")
                     tracker.sendEvent(TAG, events)
-                    writeInDatabase(candidate.copy(thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_FAIL))
-                    callback()
+//                    writeInDatabase(candidate.copy(thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_FAIL))
+                    callback(candidate.copy(thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_FAIL))
                 }
             }
         }

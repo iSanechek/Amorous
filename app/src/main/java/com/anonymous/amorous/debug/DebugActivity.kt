@@ -4,14 +4,23 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.anonymous.amorous.R
+import com.anonymous.amorous.data.Candidate
 import com.anonymous.amorous.data.database.LocalDatabase
 import com.anonymous.amorous.service.AmorousService
 import com.anonymous.amorous.service.JobSchContract
 import com.anonymous.amorous.utils.ActionContract
 import com.anonymous.amorous.utils.FileUtils
+import com.anonymous.amorous.workers.SyncDatabaseWorker
 import kotlinx.android.synthetic.main.debug_layout.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
+import java.sql.Time
+import java.util.concurrent.TimeUnit
 
 class DebugActivity : AppCompatActivity() {
 
@@ -39,39 +48,19 @@ class DebugActivity : AppCompatActivity() {
 
         val items = files.getAllFilesFromCacheFolder(this)
         log("Size ${items.size}")
-//        if (items.isNotEmpty()) {
-//            for (i in 0 until items.size) {
-//                val file = items[i]
-//                log("File name ${file.name}")
-//
-//                if (files.getCheckFileExists(file.absolutePath)) {
-//                    log("File ${file.name} exists")
-//                } else log("File ${file.name} not exists")
-//
-//                log("File ${file.name} size ${files.getFileSizeFromPath(file.absolutePath)}")
-//
-//                if (i == i % 2) {
-//                    val name = file.name
-//                    val path = file.absolutePath
-//                    if (files.removeFile(path)) {
-//                        log("Remove file $name")
-//                        if (files.getCheckFileExists(path)) {
-//                            log("File $name not exists")
-//                        } else log("File $name not exists")
-//                    } else log("File $name not remove")
-//                }
-//            }
-//        }
-//
-//        if (files.clearCacheFolder(this)) {
-//            log("Clear cache folder")
-//        } else {
-//            log("Not clear cache folder")
-//        }
-//        log("Cache folder size ${files.getReadableFileSize(files.getCacheFolderSize(this))}")
 
+        GlobalScope.launch(Dispatchers.IO) {
+            val i = db.getCandidates("SELECT * FROM c WHERE r_c_u =? ORDER BY d ASC LIMIT 10", arrayOf("thumbnail_upload_need"))
+            log("Size candidates ${i.size}")
+
+        }
+
+        action.prepareAction()
         debug_start.setOnClickListener {
-            s.scheduleJob(this)
+//            s.scheduleJob(this)
+            log("Start work")
+            val work = PeriodicWorkRequestBuilder<SyncDatabaseWorker>(120, TimeUnit.SECONDS).build()
+            WorkManager.getInstance().enqueue(work)
         }
     }
 

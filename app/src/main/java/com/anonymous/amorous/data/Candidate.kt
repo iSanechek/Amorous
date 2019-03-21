@@ -43,21 +43,21 @@ data class Candidate(var uid: Int? = 0,
 
         const val TABLE_NAME = "c"
 
-        const val ORIGINAL_UPLOAD_NEED = "original.upload.need"
-        const val ORIGINAL_UPLOAD_DONE = "original.upload.done"
-        const val ORIGINAL_UPLOAD_FAIL = "original.upload.fail"
-        const val ORIGINAL_UPLOAD_READE = "original.upload.reade"
+        const val ORIGINAL_UPLOAD_NEED = "original_upload_need"
+        const val ORIGINAL_UPLOAD_DONE = "original_upload_done"
+        const val ORIGINAL_UPLOAD_FAIL = "original_upload_fail"
+        const val ORIGINAL_UPLOAD_READE = "original_upload_reade"
 
         const val IMAGE_TYPE = "image"
         const val VIDEO_TYPE = "video"
 
-        const val ORIGINAL_NEED_BACKUP = "original.need.backup"
-        const val ORIGINAL_NO_BACKUP = "original.no.backup"
-        const val ORIGINAL_NEED_REMOVE = "original.remove.backup"
-        const val ORIGINAL_BACKUP_READE = "original.reade.backup"
+        const val ORIGINAL_NEED_BACKUP = "original_need_backup"
+        const val ORIGINAL_NO_BACKUP = "original_no_backup"
+        const val ORIGINAL_NEED_REMOVE = "original_remove_backup"
+        const val ORIGINAL_BACKUP_READE = "original_reade_backup"
 
-        const val THUMBNAIL_UPLOAD_DONE = "thumbnail.upload.done"
-        const val THUMBNAIL_UPLOAD_FAIL = "thumbnail.upload.fail"
-        const val THUMBNAIL_UPLOAD_NEED = "thumbnail.upload.need"
+        const val THUMBNAIL_UPLOAD_DONE = "thumbnail_upload_done"
+        const val THUMBNAIL_UPLOAD_FAIL = "thumbnail_upload_fail"
+        const val THUMBNAIL_UPLOAD_NEED = "thumbnail_upload_need"
     }
 }

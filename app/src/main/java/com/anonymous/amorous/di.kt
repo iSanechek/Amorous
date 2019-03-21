@@ -48,7 +48,7 @@ val appModule = module {
         WorkersManagerImpl()
     }
 
-    factory<AuthContract> {
+    single<AuthContract> {
         AuthUtils(
                 get()
         )
@@ -77,8 +77,9 @@ val appModule = module {
         DatabaseHandler(androidContext().applicationContext)
     }
 
-    factory<DatabaseUtils> {
-        DatabaseUtilsImpl()
+    factory<RemoteDatabaseUtils> {
+        DatabaseUtilsImpl(
+        )
     }
 
     single<FileUtils> {

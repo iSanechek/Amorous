@@ -2,8 +2,9 @@ package com.anonymous.amorous.workers
 
 import android.content.Context
 import androidx.work.WorkerParameters
-import com.anonymous.amorous.data.Candidate
 import com.anonymous.amorous.utils.UploadBitmapUtils
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.koin.standalone.inject
 
 class SyncDatabaseWorker(
@@ -14,9 +15,7 @@ class SyncDatabaseWorker(
     private val upload: UploadBitmapUtils by inject()
 
     override suspend fun doWorkAsync(): Result {
-        val cache = database.getCandidates("SELECT * FROM ${Candidate.TABLE_NAME} " +
-                "WHERE ${Candidate.COLUMN_THUMBNAIL_STATUS} =:${Candidate.THUMBNAIL_UPLOAD_NEED} " +
-                "ORDER BY ${Candidate.COLUMN_DATE} ASC LIMIT =:10", null)
+        val cache = database.getCandidates("SELECT * FROM c WHERE r_c_u =? ORDER BY d ASC LIMIT 10", arrayOf("thumbnail_upload_need"))
         addEvent("Candidates for remote upload! Candidates size ${cache.size}")
         return if (cache.isEmpty()) {
             addEvent("Retry candidates for remote upload!")
@@ -24,9 +23,18 @@ class SyncDatabaseWorker(
             Result.retry()
         } else {
 
+            for (candidate in cache) {
+                addEvent("Create task for candidate ${candidate.name}")
 
+                upload.uploadBitmap(candidate) {
+                    GlobalScope.launch {
+                        database.updateCandidate(it)
+                    }
+                    remoteDatabase.writeCandidateInDatabase("", candidate)
+                }
 
-
+                sendEvent(TAG, getEvents())
+            }
 
             Result.success()
         }
