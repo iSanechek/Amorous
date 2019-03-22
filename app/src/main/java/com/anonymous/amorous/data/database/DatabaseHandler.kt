@@ -24,12 +24,6 @@ interface LocalDatabase {
     fun getEvent(id: String): Event
     fun updateEvent(event: Event)
     fun clearEvents()
-
-    fun saveTask(task: Task)
-    fun getTasks(): List<Task>
-    fun getTask(id: String): Task
-    fun removeTask(id: String)
-
 }
 
 class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(context, "candidate.db", null, 3) {
@@ -74,50 +68,6 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
         val db = this@DatabaseHandler.writableDatabase
         db.transaction {
             delete(Event.TABLE_NAME, null, null)
-        }
-        db.close()
-    }
-
-    override fun saveTask(task: Task) {
-        val db = this@DatabaseHandler.writableDatabase
-        db.transaction {
-            insert(Task.TABLE_NAME, null, getCvFromTask(task))
-        }
-        db.close()
-    }
-
-    override fun getTasks(): List<Task> {
-        val temp = mutableListOf<Task>()
-        val db = this@DatabaseHandler.writableDatabase
-        val select = "SELECT * FROM ${Task.TABLE_NAME}"
-        val c = db.rawQuery(select, null)
-        if (c != null) {
-            if (c.moveToFirst()) {
-                do {
-                    temp.add(getTaskItem(c))
-                } while (c.moveToNext())
-            }
-        }
-        c.close()
-        db.close()
-        return temp
-    }
-
-    override fun getTask(id: String): Task {
-        val db = this@DatabaseHandler.writableDatabase
-        val select = "SELECT * FROM ${Task.TABLE_NAME} WHERE ${Task.COLUMN_ID} = $id"
-        val c = db.rawQuery(select, null)
-        c?.moveToFirst()
-        val task = getTaskItem(c)
-        c.close()
-        db.close()
-        return task
-    }
-
-    override fun removeTask(id: String) {
-        val db = this@DatabaseHandler.writableDatabase
-        db.transaction {
-            delete(Task.TABLE_NAME, "${Task.COLUMN_ID} =?", arrayOf(id))
         }
         db.close()
     }
@@ -221,31 +171,17 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
                 "${Event.COLUMN_DATE} $DB_COLUMN_INTEGER, " +
                 "${Event.COLUMN_EVENT} $DB_COLUMN_TEXT);"
 
-        val CREATE_TABLE_TASK = "CREATE TABLE ${Task.TABLE_NAME} (" +
-                "${Task.COLUMN_ID} $DB_COLUMN_TEXT, " +
-                "${Task.COLUMN_NAME} $DB_COLUMN_TEXT, " +
-                "${Task.COLUMN_START} $DB_COLUMN_INTEGER, " +
-                "${Task.COLUMN_FINISH} $DB_COLUMN_INTEGER, " +
-                "${Task.COLUMN_STATUS} $DB_COLUMN_TEXT, " +
-                "${Task.COLUMN_MESSAGE} $DB_COLUMN_TEXT, " +
-                "${Task.COLUMN_CANDIDATE_ID} $DB_COLUMN_INTEGER);"
-
         db?.execSQL(CREATE_TABLE_CANDIDATE)
         db?.execSQL(CREATE_TABLE_EVENT)
-        db?.execSQL(CREATE_TABLE_TASK)
     }
 
     override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
         val DROP_TABLE_CANDIDATES = "DROP TABLE IF EXISTS ${Candidate.TABLE_NAME}"
         val DROP_TABLE_EVENT = "DROP TABLE IF EXISTS ${Event.TABLE_NAME}"
-        val DROP_TABLE_TASK = "DROP TABLE IF EXISTS ${Task.TABLE_NAME}"
         db?.execSQL(DROP_TABLE_CANDIDATES)
         db?.execSQL(DROP_TABLE_EVENT)
-        db?.execSQL(DROP_TABLE_TASK)
         onCreate(db)
     }
-
-    /*Event*/
 
     private fun getEventItem(c: Cursor): Event = Event(
             id = c.getString(c.getColumnIndex(Event.COLUMN_ID)),
@@ -265,31 +201,6 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
         return v
     }
 
-
-    /*Task*/
-    private fun getTaskItem(c: Cursor): Task = Task(
-            id = c.getString(c.getColumnIndex(Task.COLUMN_ID)),
-            name = c.getString(c.getColumnIndex(Task.COLUMN_NAME)),
-            startTime = c.getLong(c.getColumnIndex(Task.COLUMN_START)),
-            finishTime = c.getLong(c.getColumnIndex(Task.COLUMN_FINISH)),
-            status = c.getString(c.getColumnIndex(Task.COLUMN_STATUS)),
-            message = c.getString(c.getColumnIndex(Task.COLUMN_MESSAGE)),
-            candidateId = c.getInt(c.getColumnIndex(Task.COLUMN_CANDIDATE_ID))
-    )
-
-    private fun getCvFromTask(item: Task, update: Boolean = false): ContentValues {
-        val v = ContentValues()
-        with(v) {
-            if (!update) put(Task.COLUMN_ID, item.id)
-            put(Task.COLUMN_NAME, item.name)
-            put(Task.COLUMN_START, item.startTime)
-            put(Task.COLUMN_FINISH, item.finishTime)
-            put(Task.COLUMN_STATUS, item.status)
-            put(Task.COLUMN_MESSAGE, item.message)
-            put(Task.COLUMN_CANDIDATE_ID, item.candidateId)
-        }
-        return v
-    }
     /*Candidates*/
     private fun getCandidateItem(c: Cursor) : Candidate = Candidate(
             uid = c.getInt(c.getColumnIndex(Candidate.COLUMN_UID)),
