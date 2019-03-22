@@ -9,10 +9,10 @@ import com.anonymous.amorous.service.AmorousService
 class ServiceStarter : BroadcastReceiver() {
     @SuppressLint("UnsafeProtectedBroadcastReceiver")
     override fun onReceive(context: Context?, intent: Intent?) {
-        val intent = Intent("com.anonymous.amorous.service.AmorousService")
+        val i = Intent("com.anonymous.amorous.service.AmorousService")
         context?.let {
-            intent.setClass(it, AmorousService::class.java)
-            it.startService(intent)
+            i.setClass(it, AmorousService::class.java)
+            it.startService(i)
         }
     }
 }
