@@ -7,7 +7,7 @@ import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
 interface ConfigurationUtils {
     fun getWorkerRetryCount(): Int
     fun getStartJobsServiceStatus(): Boolean
-    fun getTimeForWorkerUpdate(workerKey: String): Int
+    fun getTimeForWorkerUpdate(workerKey: String): Long
     fun getCandidatesTable(): String
     fun getUserData(): Pair<String, String>
 }
@@ -28,7 +28,7 @@ class ConfigurationUtilsImpl : ConfigurationUtils {
 
     override fun getStartJobsServiceStatus(): Boolean = config.getBoolean(JOBS_SERVICE_STATUS_KEY)
 
-    override fun getTimeForWorkerUpdate(workerKey: String): Int = config.getLong(workerKey).toInt()
+    override fun getTimeForWorkerUpdate(workerKey: String): Long = config.getLong(workerKey)
 
     override fun getCandidatesTable(): String = config.getString(CANDIDATE_REMOTE_TABLE_KEY)
 

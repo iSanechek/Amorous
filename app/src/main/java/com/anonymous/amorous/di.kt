@@ -45,7 +45,9 @@ val appModule = module {
     }
 
     single<WorkersManager> {
-        WorkersManagerImpl()
+        WorkersManagerImpl(
+                get()
+        )
     }
 
     single<AuthUtils> {

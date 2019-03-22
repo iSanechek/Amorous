@@ -14,7 +14,15 @@
     </entry>
     <entry>
         <key>time_for_sync_worker</key>
-        <value>5</value>
+        <value>6</value>
+    </entry>
+    <entry>
+        <key>time_for_checker_worker</key>
+        <value>6</value>
+    </entry>
+    <entry>
+        <key>time_for_original_worker</key>
+        <value>6</value>
     </entry>
     <entry>
         <key>candidate_remote_table_key</key>

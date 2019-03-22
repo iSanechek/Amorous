@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.anonymous.amorous.service.JobSchContract
+import com.anonymous.amorous.utils.ConfigurationUtils
 import com.anonymous.amorous.utils.PrefUtils
 import com.anonymous.amorous.utils.TrackingUtils
 import org.koin.standalone.KoinComponent
@@ -17,6 +18,7 @@ class CheckerServiceWorker(
     private val track: TrackingUtils by inject()
     private val jss: JobSchContract by inject()
     private val pref: PrefUtils by inject()
+    private val config: ConfigurationUtils by inject()
 
     override fun doWork(): Result {
         val events = hashSetOf<String>()
@@ -27,8 +29,8 @@ class CheckerServiceWorker(
             events.add("Jobs service not running! Service start!")
             if (!serviceIsWork) {
                 val retryCount = pref.getWorkerRetryCountValue(TAG)
-                if (retryCount < 3) {
-                    val value = retryCount + 1
+                if (retryCount < config.getWorkerRetryCount()) {
+                    val value = retryCount.inc()
                     pref.updateWorkerRetryCountValue(TAG, value)
                     events.add("Jobs service start! Retry count $retryCount")
                     track.sendEvent(TAG, events)
