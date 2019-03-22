@@ -8,7 +8,6 @@ import android.database.sqlite.SQLiteOpenHelper
 import androidx.core.database.sqlite.transaction
 import com.anonymous.amorous.data.Candidate
 import com.anonymous.amorous.data.Event
-import com.anonymous.amorous.data.Task
 import com.anonymous.amorous.debug.logDebug
 
 interface LocalDatabase {
