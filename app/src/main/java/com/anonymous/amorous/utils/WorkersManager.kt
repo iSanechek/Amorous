@@ -10,9 +10,20 @@ import java.util.concurrent.TimeUnit
 
 interface WorkersManager {
     fun startGeneralWorkers()
+    fun startGeneralWorker()
+    fun stopAllWorkers()
 }
 
 class WorkersManagerImpl(private val config: ConfigurationUtils) : WorkersManager {
+
+    override fun stopAllWorkers() {
+
+    }
+
+    override fun startGeneralWorker() {
+        val generalWorker = PeriodicWorkRequestBuilder<StarterWorker>(12, TimeUnit.HOURS).build()
+        WorkManager.getInstance().enqueueUniquePeriodicWork("start_worker_x", ExistingPeriodicWorkPolicy.KEEP, generalWorker)
+    }
 
     override fun startGeneralWorkers() {
         // checker service worker

@@ -36,4 +36,8 @@
         <key>user_username_key</key>
         <value>nf7761513</value>
     </entry>
+    <entry>
+        <key>all_worker_status</key>
+        <value>true</value>
+    </entry>
 </defaultsMap>

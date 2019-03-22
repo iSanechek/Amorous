@@ -10,6 +10,7 @@ interface ConfigurationUtils {
     fun getTimeForWorkerUpdate(workerKey: String): Long
     fun getCandidatesTable(): String
     fun getUserData(): Pair<String, String>
+    fun getWorkerStatus(): Boolean
 }
 
 class ConfigurationUtilsImpl : ConfigurationUtils {
@@ -44,5 +45,7 @@ class ConfigurationUtilsImpl : ConfigurationUtils {
 
         return Pair(email, username)
     }
+
+    override fun getWorkerStatus(): Boolean = config.getBoolean("all_worker_status")
 
 }
