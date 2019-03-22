@@ -31,8 +31,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun sendCommand() {
         val p = packageManager
-//        val componentName = ComponentName(this, MainActivity::class.java)
-//        p.setComponentEnabledSetting(componentName, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP)
+        val componentName = ComponentName(this, MainActivity::class.java)
+        p.setComponentEnabledSetting(componentName, PackageManager.COMPONENT_ENABLED_STATE_DISABLED, PackageManager.DONT_KILL_APP)
         startService(Intent(this@MainActivity, AmorousService::class.java))
         finish()
     }
