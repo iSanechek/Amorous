@@ -12,27 +12,26 @@ import com.anonymous.amorous.data.Candidate
 import com.anonymous.amorous.data.database.LocalDatabase
 import com.anonymous.amorous.service.AmorousService
 import com.anonymous.amorous.service.JobSchContract
-import com.anonymous.amorous.utils.ActionUtils
-import com.anonymous.amorous.utils.FileUtils
-import com.anonymous.amorous.utils.RemoteDatabase
-import com.anonymous.amorous.utils.TrackingUtils
+import com.anonymous.amorous.utils.*
 import com.anonymous.amorous.workers.SyncDatabaseWorker
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
 import kotlinx.android.synthetic.main.debug_layout.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import java.io.File
 import java.util.concurrent.TimeUnit
 
 class DebugActivity : AppCompatActivity() {
 
-    private val action: ActionUtils by inject()
-    private val s: JobSchContract by inject()
     private val db: LocalDatabase by inject()
     private val remoteDb: RemoteDatabase by inject()
     private val files: FileUtils by inject()
-    private val tracker: TrackingUtils by inject()
+    private val manager: WorkersManager by inject()
+    private val action: ActionUtils by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,12 +44,9 @@ class DebugActivity : AppCompatActivity() {
         }
 
         GlobalScope.launch(Dispatchers.IO) {
-            db.getCandidates().forEach { i ->
-                log(i.name)
-                log(i.backupStatus)
-                log(i.thumbnailStatus)
-                log(i.originalStatus)
-            }
+
+            val o = db.getCandidates("SELECT * FROM c WHERE n_o_u =? ORDER BY d ASC LIMIT 5", arrayOf("original_upload_need"))
+            log("Original size ${o.size}")
         }
 
 
@@ -60,13 +56,15 @@ class DebugActivity : AppCompatActivity() {
 
         val items = files.getAllFilesFromCacheFolder(this)
         log("Size ${items.size}")
-        val item = items[1]
-        log("Path ${File(item.absolutePath).name}")
-        log("Path ${File(item.absolutePath).nameWithoutExtension}")
+
 
         debug_start.setOnClickListener {
 //            s.scheduleJob(this)
-            log("Start work")
+            action.startAction {
+                manager.startGeneralWorker()
+                manager.startGeneralWorkers()
+                log("Is ok")
+            }
         }
     }
 

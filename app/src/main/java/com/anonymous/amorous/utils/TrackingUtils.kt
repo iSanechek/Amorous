@@ -28,6 +28,7 @@ class TrackingUtilsImpl(private val remoteDatabase: RemoteDatabase) : TrackingUt
             }
             val event = Event(id = UUID.randomUUID().toString(), title = tag, date = System.currentTimeMillis(), event = builder.toString())
             remoteDatabase.writeEventInDatabase(event)
+            log(event.toString())
         }
     }
 }

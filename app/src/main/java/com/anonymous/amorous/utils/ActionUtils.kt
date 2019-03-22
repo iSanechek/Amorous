@@ -1,6 +1,7 @@
 package com.anonymous.amorous.utils
 
 import android.content.Context
+import android.util.Log
 import com.anonymous.amorous.data.database.LocalDatabase
 import com.anonymous.amorous.debug.logDebug
 import com.anonymous.amorous.service.JobSchContract
@@ -20,16 +21,18 @@ class ActionUtilsImpl(
     private val events = hashSetOf<String>()
 
     override fun startAction(callback: () -> Unit) {
-        auth.checkAuthState { result ->
+        auth.startAuth { result ->
             when (result) {
                 is AuthCallBack.AuthOk -> {
                     addEvent("Auth done! ${result.user?.uid}")
                     addEvent("Start action!")
                     callback()
+                    Log.d("TEST", "Auth done")
                     tracker.sendEvent("ActionUtils", events)
                 }
                 is AuthCallBack.AuthError -> {
                     addEvent("Auth fail!")
+                    Log.d("TEST", "Auth fail")
                     addEvent("Auth error: ${result.errorMessage}")
                     tracker.sendEvent("ActionUtils", events)
                 }

@@ -6,5 +6,6 @@ import com.google.firebase.database.IgnoreExtraProperties
 data class Info(
         val totalMemory: Long? = 0L,
         val freeMemory: Long? = 0L,
+        val cacheFolderSize: Long? = 0L,
         val lastUpdate: Long? = 0L
 )

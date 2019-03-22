@@ -1,5 +1,6 @@
 package com.anonymous.amorous.utils
 
+import android.util.Log
 import com.anonymous.amorous.DB_T_U
 import com.anonymous.amorous.data.User
 import com.anonymous.amorous.debug.logDebug
@@ -34,9 +35,11 @@ class AuthUtilsImpl(
     override fun startAuth(callback: (AuthCallBack) -> Unit) {
         val auth = FirebaseAuth.getInstance()
         val userData = config.getUserData()
+        Log.d("TEST", "user data ${userData.first} ${userData.second}")
         auth.signInWithEmailAndPassword(userData.first, userData.second)
                 .addOnCompleteListener {
                     if (it.isSuccessful) {
+                        Log.d("TEST", "Auth comp")
                         val user = auth.currentUser
                         if (user != null) {
                             db.getDatabase()
@@ -57,7 +60,10 @@ class AuthUtilsImpl(
                                                     db.createNewUser(user.uid, newUser)
                                                     callback(AuthCallBack.AuthOk(auth.currentUser))
                                                 }
-                                                else -> addEvent("Юзер уже есть в таблице")
+                                                else -> {
+                                                    callback(AuthCallBack.AuthOk(auth.currentUser))
+                                                    addEvent("Юзер уже есть в таблице")
+                                                }
                                             }
                                         }
                                     })
@@ -69,6 +75,7 @@ class AuthUtilsImpl(
                     }
                 }.addOnFailureListener {
                     addEvent("Auth failure ${it.message}")
+                    Log.d("TEST", "Auth error ${it.message}")
                     tracker.sendEvent("AuthUtils", events)
                     callback(AuthCallBack.AuthError(it.message ?: ""))
                 }
