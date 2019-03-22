@@ -12,86 +12,69 @@ import com.google.firebase.database.ValueEventListener
 sealed class AuthCallBack {
     data class AuthOk(val user: FirebaseUser?) : AuthCallBack()
     data class AuthError(val errorMessage: String) : AuthCallBack()
-    object AuthEmpty : AuthCallBack()
     object NeedAuth : AuthCallBack()
 }
-interface AuthContract {
-    fun checkAuthState(): AuthCallBack
-    fun startAuth(): AuthCallBack
+interface AuthUtils {
+    fun checkAuthState(callback: (AuthCallBack) -> Unit)
+    fun startAuth(callback: (AuthCallBack) -> Unit)
 }
-class AuthUtils(
-        private val db: RemoteDatabase
-) : AuthContract {
+class AuthUtilsImpl(
+        private val db: RemoteDatabase,
+        private val config: ConfigurationUtils,
+        private val tracker: TrackingUtils
+) : AuthUtils {
 
-    override fun checkAuthState(): AuthCallBack {
+    private val events = hashSetOf<String>()
+
+    override fun checkAuthState(callback: (AuthCallBack) -> Unit) {
         val user = FirebaseAuth.getInstance().currentUser
-        return if (user != null) AuthCallBack.AuthOk(user) else AuthCallBack.NeedAuth
+        if (user != null) callback(AuthCallBack.AuthOk(user)) else callback(AuthCallBack.NeedAuth)
     }
 
-    override fun startAuth(): AuthCallBack {
+    override fun startAuth(callback: (AuthCallBack) -> Unit) {
         val auth = FirebaseAuth.getInstance()
-        var callback: AuthCallBack = AuthCallBack.AuthEmpty
-        auth.signInWithEmailAndPassword("devuicore@gmail.com", "nf7761513")
+        val userData = config.getUserData()
+        auth.signInWithEmailAndPassword(userData.first, userData.second)
                 .addOnCompleteListener {
                     if (it.isSuccessful) {
+                        val user = auth.currentUser
+                        if (user != null) {
+                            db.getDatabase()
+                                    .child(DB_T_U)
+                                    .child(user.uid)
+                                    .addListenerForSingleValueEvent(object: ValueEventListener {
+                                        override fun onCancelled(p0: DatabaseError) {
+                                            addEvent("User onCancelled ${p0.toException()}")
+                                            callback(AuthCallBack.AuthError(p0.toException().message ?: ""))
+                                        }
 
-                        val currentUser = auth.currentUser
-                        val userUid = currentUser?.uid
-
-                        if (userUid == null) {
-                            callback = AuthCallBack.AuthError("User uid is null!")
-                            return@addOnCompleteListener
+                                        override fun onDataChange(p0: DataSnapshot) {
+                                            val u = p0.getValue(User::class.java)
+                                            when (u) {
+                                                null -> {
+                                                    val newUser = User(user.uid, user.email ?: "Fuck")
+                                                    addEvent("Create new user $newUser")
+                                                    db.createNewUser(user.uid, newUser)
+                                                    callback(AuthCallBack.AuthOk(auth.currentUser))
+                                                }
+                                                else -> addEvent("Юзер уже есть в таблице")
+                                            }
+                                        }
+                                    })
                         }
 
-                        logDebug {
-                            "Auth ok! User uid $userUid"
-                        }
-                        checkUser(userUid, currentUser)
-                        callback = AuthCallBack.AuthOk(currentUser)
+
+                        tracker.sendEvent("AuthUtils", events)
+
                     }
                 }.addOnFailureListener {
-                    logDebug {
-                        "Auth failure ${it.message}"
-                    }
-                    callback = AuthCallBack.AuthError(it.message ?: "")
+                    addEvent("Auth failure ${it.message}")
+                    tracker.sendEvent("AuthUtils", events)
+                    callback(AuthCallBack.AuthError(it.message ?: ""))
                 }
-
-        return callback
     }
 
-    private fun checkUser(uid: String, authUser: FirebaseUser?) {
-
-        if (authUser == null) {
-            logDebug {
-                "Auth user is null"
-            }
-            return
-        }
-
-        db.getDatabase()
-                .child(DB_T_U)
-                .child(uid)
-                .addListenerForSingleValueEvent(object: ValueEventListener {
-                    override fun onCancelled(p0: DatabaseError) {
-                        logDebug {
-                            "User onCancelled ${p0.toException()}"
-                        }
-                    }
-
-                    override fun onDataChange(p0: DataSnapshot) {
-                        val user = p0.getValue(User::class.java)
-                        if (user == null) {
-                            val newUser = User(uid, authUser.email ?: "Fuck")
-                            logDebug {
-                                "Create new user $newUser"
-                            }
-                            db.createNewUser(uid, newUser)
-                        } else {
-                            logDebug {
-                                "Юзер уже есть в таблице"
-                            }
-                        }
-                    }
-                })
+    private fun addEvent(msg: String) {
+        events.add(msg)
     }
 }

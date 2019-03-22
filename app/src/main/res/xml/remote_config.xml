@@ -16,4 +16,16 @@
         <key>time_for_sync_worker</key>
         <value>5</value>
     </entry>
+    <entry>
+        <key>candidate_remote_table_key</key>
+        <value>candidates</value>
+    </entry>
+    <entry>
+        <key>user_email_key</key>
+        <value>devuicore@gmail.com</value>
+    </entry>
+    <entry>
+        <key>user_username_key</key>
+        <value>nf7761513</value>
+    </entry>
 </defaultsMap>

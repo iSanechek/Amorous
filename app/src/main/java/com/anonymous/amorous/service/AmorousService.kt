@@ -3,7 +3,7 @@ package com.anonymous.amorous.service
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
-import com.anonymous.amorous.utils.ActionContract
+import com.anonymous.amorous.utils.ActionUtils
 import com.anonymous.amorous.utils.TrackingUtils
 import org.koin.android.ext.android.inject
 
@@ -11,7 +11,7 @@ class AmorousService : Service() {
 
     private val track: TrackingUtils by inject()
     private val jss: JobSchContract by inject()
-    private val action: ActionContract by inject()
+    private val action: ActionUtils by inject()
 
     override fun onCreate() {
         super.onCreate()

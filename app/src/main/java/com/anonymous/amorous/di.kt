@@ -33,8 +33,8 @@ val appModule = module {
         JobSchedulerService()
     }
 
-    single<ActionContract> {
-        ActionUtils(
+    single<ActionUtils> {
+        ActionUtilsImpl(
                 get(),
                 androidContext(),
                 get(),
@@ -48,8 +48,10 @@ val appModule = module {
         WorkersManagerImpl()
     }
 
-    single<AuthContract> {
-        AuthUtils(
+    single<AuthUtils> {
+        AuthUtilsImpl(
+                get(),
+                get(),
                 get()
         )
     }

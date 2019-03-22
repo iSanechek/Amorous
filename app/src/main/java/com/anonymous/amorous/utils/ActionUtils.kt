@@ -8,77 +8,53 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
-interface ActionContract {
-    fun prepareAction()
+interface ActionUtils {
+    fun startAction()
 }
 
-class ActionUtils(
+class ActionUtilsImpl(
         private val jss: JobSchContract,
         private val context: Context,
-        private val auth: AuthContract,
+        private val auth: AuthUtils,
         private val scan: ScanContract,
         private val db: LocalDatabase,
-        private val upload: UploadBitmapUtils) : ActionContract {
+        private val tracker: TrackingUtils
+) : ActionUtils {
 
-    override fun prepareAction() {
-        val checkAuthResult = auth.checkAuthState()
-        when(checkAuthResult) {
-            is AuthCallBack.NeedAuth -> {
-                val authResult = auth.startAuth()
-                when(authResult) {
-                    is AuthCallBack.AuthOk -> {
-                        logDebug {
-                            "Auth is Ok ${authResult.user?.displayName}"
+    private val events = hashSetOf<String>()
+
+    override fun startAction() {
+        auth.checkAuthState { result ->
+            when (result) {
+                is AuthCallBack.AuthOk -> {
+                    addEvent("Auth done! ${result.user?.uid}")
+                    addEvent("Start action!")
+                    jss.scheduleJob(context)
+                    val scanResult = scan.startScan()
+                    when(scanResult) {
+                        is ScanCallback.ResultOk -> {
+                            val items = scanResult.items
+                            when {
+                                items.isNotEmpty() -> GlobalScope.launch(Dispatchers.IO) {
+                                    db.saveCandidates(items)
+                                }
+                                else -> addEvent("Result scan null. :(")
+                            }
                         }
-                        startAction()
+                        is ScanCallback.ResultFail -> addEvent("Scan fail ${scanResult.fail}")
                     }
-                    is AuthCallBack.AuthError -> logDebug {
-                        "Auth Error ${authResult.errorMessage}"
-                    }
-                    is AuthCallBack.AuthEmpty -> logDebug {
-                        "Auth empty"
-                    }
-                    else -> logDebug {
-                        "WTF authResult $authResult"
-                    }
+                    tracker.sendEvent("ActionUtils", events)
                 }
-            }
-            is AuthCallBack.AuthOk -> {
-                logDebug {
-                    "Auth check is Ok ${checkAuthResult.user?.uid?.substring(0, 6)}"
+                is AuthCallBack.AuthError -> {
+                    addEvent("Auth fail!")
+                    addEvent("Auth error: ${result.errorMessage}")
+                    tracker.sendEvent("ActionUtils", events)
                 }
-
-                startAction()
-            }
-            else -> logDebug {
-                "WTF authResult $checkAuthResult"
             }
         }
     }
 
-    private fun startAction() {
-        jss.scheduleJob(context)
-
-        val result = scan.startScan()
-        when(result) {
-            is ScanCallback.ResultOk -> {
-                val items = result.items
-                logDebug {
-                    "Scan result size ${items.size}"
-                }
-
-                GlobalScope.launch(Dispatchers.IO) {
-                    db.saveCandidates(items)
-                }
-
-//                val item = result.items[7]
-//                upload.uploadBitmap(item)
-            }
-            is ScanCallback.ResultFail -> {
-                logDebug {
-                    "Scan fail ${result.fail}"
-                }
-            }
-        }
+    private fun addEvent(msg: String) {
+        events.add(msg)
     }
 }

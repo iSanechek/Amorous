@@ -2,10 +2,9 @@ package com.anonymous.amorous.workers
 
 import android.content.Context
 import androidx.work.WorkerParameters
-import com.anonymous.amorous.DB_T_U
+import com.anonymous.amorous.DB_T_C
 import com.anonymous.amorous.data.Candidate
 import com.anonymous.amorous.utils.UploadBitmapUtils
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
@@ -20,9 +19,9 @@ class SyncDatabaseWorker(
     private val upload: UploadBitmapUtils by inject()
 
     override suspend fun doWorkAsync(): Result = coroutineScope {
-        val cache = database.getCandidates("SELECT * FROM c WHERE r_c_u =? ORDER BY d ASC LIMIT 10", arrayOf("thumbnail_upload_need"))
-        addEvent("Candidates for remote upload! Candidates size ${cache.size}")
         try {
+            val cache = database.getCandidates("SELECT * FROM c WHERE r_c_u =? ORDER BY d ASC LIMIT 10", arrayOf("thumbnail_upload_need"))
+            addEvent("Candidates for remote upload! Candidates size ${cache.size}")
             when {
                 cache.isEmpty() -> addEvent("Retry candidates thumbnail for remote upload!")
                 else -> for (candidate in cache) {
@@ -34,12 +33,9 @@ class SyncDatabaseWorker(
                 }
             }
 
-            val userUid = remoteDatabase.userUid()
-            if (userUid.isEmpty()) {
-
-                Result.success()
-            }
-            val ref = remoteDatabase.getDatabase().child(DB_T_U).child(userUid)
+            val candidateTable = configuration.getCandidatesTable()
+            addEvent("Candidate table $candidateTable")
+            val ref = remoteDatabase.getDatabase().child(candidateTable)
             ref.addValueEventListener(object: ValueEventListener {
                 override fun onCancelled(p0: DatabaseError) {
                     addEvent("Упс... Какая та херня при получении данных с сервера.")
@@ -47,25 +43,42 @@ class SyncDatabaseWorker(
                 }
 
                 override fun onDataChange(p0: DataSnapshot) {
-                    val all = database.getCandidates()
-                    for (snapshot in p0.children) {
-                        val candidate = snapshot.getValue(Candidate::class.java)
-                        when {
-                            candidate != null -> when {
-                                all.isEmpty() -> database.saveCandidate(candidate)
-                                else -> {
-                                    val item = all.find { it.uid == candidate.uid }
-                                    when {
-                                        item != null -> database.updateCandidate(item)
-                                        else -> database.saveCandidate(candidate)
+                    if (p0.exists()) {
+                        val all = database.getCandidates()
+                        for (snapshot in p0.children) {
+                            val candidate = snapshot.getValue(Candidate::class.java)
+                            when {
+                                candidate != null -> when {
+                                    all.isEmpty() -> database.saveCandidate(candidate)
+                                    else -> {
+                                        val item = all.find { it.uid == candidate.uid }
+                                        when {
+                                            item != null -> database.updateCandidate(item)
+                                            else -> database.saveCandidate(candidate)
+                                        }
                                     }
                                 }
+                                else -> addEvent("Candidate from service is null!")
                             }
-                            else -> addEvent("Candidate from service is null!")
                         }
+                    } else {
+                        addEvent("Remote database not exists!")
                     }
                 }
             })
+
+            val removeItems = database.getCandidates("SELECT * FROM c WHERE r_c_u =?", arrayOf("original_remove_backup"))
+            if (removeItems.isNotEmpty()) {
+                for (remove in removeItems) {
+                    val path = remove.tempPath
+                    if (path != null) {
+                        if (fileUtils.removeFile(path)) {
+                            database.updateCandidate(remove.copy(backupStatus = Candidate.ORIGINAL_NO_BACKUP))
+                        }
+                    }
+                }
+            }
+
             sendEvent(TAG, getEvents())
             Result.success()
         } catch (e: Exception) {

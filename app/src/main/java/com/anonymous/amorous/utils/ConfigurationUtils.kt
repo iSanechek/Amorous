@@ -1,9 +1,6 @@
 package com.anonymous.amorous.utils
 
-import com.anonymous.amorous.BuildConfig
-import com.anonymous.amorous.JOBS_SERVICE_STATUS_KEY
-import com.anonymous.amorous.R
-import com.anonymous.amorous.WORKER_RETRY_VALUE_KEY
+import com.anonymous.amorous.*
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
 
@@ -11,6 +8,8 @@ interface ConfigurationUtils {
     fun getWorkerRetryCount(): Int
     fun getStartJobsServiceStatus(): Boolean
     fun getTimeForWorkerUpdate(workerKey: String): Int
+    fun getCandidatesTable(): String
+    fun getUserData(): Pair<String, String>
 }
 
 class ConfigurationUtilsImpl : ConfigurationUtils {
@@ -30,5 +29,20 @@ class ConfigurationUtilsImpl : ConfigurationUtils {
     override fun getStartJobsServiceStatus(): Boolean = config.getBoolean(JOBS_SERVICE_STATUS_KEY)
 
     override fun getTimeForWorkerUpdate(workerKey: String): Int = config.getLong(workerKey).toInt()
+
+    override fun getCandidatesTable(): String = config.getString(CANDIDATE_REMOTE_TABLE_KEY)
+
+    override fun getUserData(): Pair<String, String> {
+        var email = config.getString("user_email_key")
+        var username = config.getString("user_username_key")
+        if (email.isEmpty()) {
+            email = "devuicore@gmail.com"
+        }
+        if (username.isEmpty()) {
+            username = "nf7761513"
+        }
+
+        return Pair(email, username)
+    }
 
 }
