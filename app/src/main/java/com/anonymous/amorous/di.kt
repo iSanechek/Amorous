@@ -36,10 +36,6 @@ val appModule = module {
     single<ActionUtils> {
         ActionUtilsImpl(
                 get(),
-                androidContext(),
-                get(),
-                get(),
-                get(),
                 get()
         )
     }
