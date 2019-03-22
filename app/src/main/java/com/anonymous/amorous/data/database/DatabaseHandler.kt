@@ -25,7 +25,7 @@ interface LocalDatabase {
     fun clearEvents()
 }
 
-class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(context, "candidate.db", null, 3) {
+class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(context, "candidate.db", null, 4) {
 
     override fun saveCandidate(candidate: Candidate) {
         val db = this@DatabaseHandler.writableDatabase

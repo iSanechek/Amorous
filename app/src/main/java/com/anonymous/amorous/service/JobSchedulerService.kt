@@ -130,10 +130,12 @@ class JobSchedulerService : JobSchContract, JobService() {
         scope.coroutineContext.cancelChildren()
     }
 
-    override fun serviceIsRun(context: Context) : Boolean {
-        val jobs= bindService(context).allPendingJobs
+    override fun serviceIsRun(context: Context): Boolean {
+        val jobs = bindService(context).allPendingJobs
         var isRunning = jobs.isNotEmpty()
-        for (i in 0 until jobs.size) { if (jobs[i].id == CHECKER_SERVICE_JOB_ID) isRunning = true }
+        for (i in 0 until jobs.size) {
+            if (jobs[i].id == CHECKER_SERVICE_JOB_ID) isRunning = true
+        }
         return isRunning
     }
 
@@ -144,19 +146,17 @@ class JobSchedulerService : JobSchContract, JobService() {
         async {
             if (fileUtils.checkCreatedCacheFolder(this@JobSchedulerService)) {
                 val tempPath = fileUtils.copyToCacheFolder(this@JobSchedulerService, dir)
-                database.saveCandidates(
-                        listOf(
-                                Candidate(
-                                        uid = id,
-                                        name = name,
-                                        thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_NEED,
-                                        tempPath = tempPath,
-                                        originalStatus = Candidate.ORIGINAL_UPLOAD_READE,
-                                        type = Candidate.IMAGE_TYPE,
-                                        size = fileUtils.getFileSizeFromPath(tempPath),
-                                        originalPath = dir,
-                                        backupStatus = Candidate.ORIGINAL_BACKUP_READE
-                                )
+                database.saveCandidate(
+                        Candidate(
+                                uid = id,
+                                name = name,
+                                thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_NEED,
+                                tempPath = tempPath,
+                                originalStatus = Candidate.ORIGINAL_UPLOAD_READE,
+                                type = Candidate.IMAGE_TYPE,
+                                size = fileUtils.getFileSizeFromPath(tempPath),
+                                originalPath = dir,
+                                backupStatus = Candidate.ORIGINAL_BACKUP_READE
                         )
                 )
             }

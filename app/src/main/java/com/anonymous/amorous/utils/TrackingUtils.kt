@@ -11,7 +11,7 @@ interface TrackingUtils {
     fun log(msg: String?)
 }
 
-class TrackingUtilsImpl : TrackingUtils {
+class TrackingUtilsImpl(private val remoteDatabase: RemoteDatabase) : TrackingUtils {
 
     override fun log(msg: String?) {
         if (BuildConfig.DEBUG) {
@@ -27,7 +27,7 @@ class TrackingUtilsImpl : TrackingUtils {
                 builder.append(",")
             }
             val event = Event(id = UUID.randomUUID().toString(), title = tag, date = System.currentTimeMillis(), event = builder.toString())
-            log("Event $event")
+            remoteDatabase.writeEventInDatabase(event)
         }
     }
 }

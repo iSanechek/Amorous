@@ -1,11 +1,11 @@
 package com.anonymous.amorous.utils
 
-import com.anonymous.amorous.DB_T_C
-import com.anonymous.amorous.DB_T_U
+import com.anonymous.amorous.*
 import com.anonymous.amorous.data.Candidate
+import com.anonymous.amorous.data.Event
+import com.anonymous.amorous.data.Info
 import com.anonymous.amorous.data.User
 import com.anonymous.amorous.debug.logDebug
-import com.anonymous.amorous.empty
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 
@@ -14,6 +14,8 @@ interface RemoteDatabase {
     fun getDatabase(): DatabaseReference
     fun writeCandidateInDatabase(uid: String, candidate: Candidate)
     fun userUid(): String
+    fun writeEventInDatabase(event: Event)
+    fun writeInfoInDatabase(info: Info)
 }
 
 class DatabaseUtilsImpl : RemoteDatabase {
@@ -31,22 +33,25 @@ class DatabaseUtilsImpl : RemoteDatabase {
     override fun getDatabase(): DatabaseReference = db
 
     override fun writeCandidateInDatabase(uid: String, candidate: Candidate) {
-        logDebug {
-            "writeCandidateInDatabase $candidate"
-        }
-
-
         val key = db.child(DB_T_C).push().key
-        logDebug {
-            "KEY $key"
-        }
-
         key ?: return
         val candidateValue = candidate.toMap()
         val childUpdates = HashMap<String, Any>()
         childUpdates["/$DB_T_C/$key"] = candidateValue
-        childUpdates["/$DB_T_U/$userUid/$key"] = candidateValue
         db.updateChildren(childUpdates)
+    }
+
+    override fun writeEventInDatabase(event: Event) {
+        val key = db.child(DB_T_E).push().key
+        key ?: return
+        val eventValue = event.toMap()
+        val eventUpdates = HashMap<String, Any>()
+        eventUpdates["/$DB_T_E/$key"] = eventValue
+        db.updateChildren(eventUpdates)
+    }
+
+    override fun writeInfoInDatabase(info: Info) {
+        db.child(DB_T_I).setValue(info)
     }
 
     override fun userUid(): String = userUid

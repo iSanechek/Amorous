@@ -14,8 +14,6 @@ interface UploadBitmapUtils {
 
 class UploadBitmapUtilsImpl(
         private val scanner: ScanContract,
-        private val database: RemoteDatabase,
-        private val localDb: LocalDatabase,
         private val tracker: TrackingUtils
 ) : UploadBitmapUtils {
 

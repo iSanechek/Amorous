@@ -57,8 +57,6 @@ val appModule = module {
     factory<UploadBitmapUtils> {
         UploadBitmapUtilsImpl(
                 get(),
-                get(),
-                get(),
                 get()
         )
     }
@@ -70,7 +68,9 @@ val appModule = module {
     }
 
     factory<TrackingUtils> {
-        TrackingUtilsImpl()
+        TrackingUtilsImpl(
+                get()
+        )
     }
 
     single<LocalDatabase> {

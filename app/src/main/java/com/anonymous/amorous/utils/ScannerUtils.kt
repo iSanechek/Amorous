@@ -62,7 +62,7 @@ class ScannerUtils(
                 if (item.name.endsWith(".mp4", ignoreCase = true)) {
                     candidates.add(Candidate(
                             uid = item.name.hashCode(),
-                            name = item.name,
+                            name = item.nameWithoutExtension,
                             thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_NEED,
                             type = Candidate.VIDEO_TYPE,
                             size = fileUtil.getReadableFileSize(item.length()),
@@ -77,7 +77,7 @@ class ScannerUtils(
                 if (item.name.endsWith(".jpg", ignoreCase = true)) {
                     candidates.add(Candidate(
                             uid = item.name.hashCode(),
-                            name = item.name,
+                            name = item.nameWithoutExtension,
                             thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_NEED,
                             type = Candidate.IMAGE_TYPE,
                             size = fileUtil.getReadableFileSize(item.length()),
