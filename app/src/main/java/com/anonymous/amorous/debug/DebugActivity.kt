@@ -16,6 +16,7 @@ import com.anonymous.amorous.service.AmorousService
 import com.anonymous.amorous.service.JobSchContract
 import com.anonymous.amorous.utils.*
 import com.anonymous.amorous.workers.ScanningWorker
+import com.anonymous.amorous.workers.StarterWorker
 import com.anonymous.amorous.workers.SyncDatabaseWorker
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -48,8 +49,12 @@ class DebugActivity : AppCompatActivity() {
 
         GlobalScope.launch(Dispatchers.IO) {
 
+            val cache = db.getCandidates("SELECT * FROM c WHERE r_c_u =? ORDER BY d ASC LIMIT 10", arrayOf("thumbnail_upload_need"))
+            log("Cache ${cache.size}")
             val o = db.getCandidates("SELECT * FROM c WHERE n_o_u =? ORDER BY d ASC LIMIT 5", arrayOf("original_upload_need"))
             log("Original size ${o.size}")
+            
+
         }
 
 
@@ -60,6 +65,9 @@ class DebugActivity : AppCompatActivity() {
         val items = files.getAllFilesFromCacheFolder(this)
         log("Size ${items.size}")
 
+//        val scannerWorker = PeriodicWorkRequestBuilder<SyncDatabaseWorker>(2, TimeUnit.HOURS)
+//                .build()
+//        WorkManager.getInstance().enqueueUniquePeriodicWork("scanning_worker_x", ExistingPeriodicWorkPolicy.REPLACE, scannerWorker)
 
         debug_start.setOnClickListener {
 //            s.scheduleJob(this)
@@ -69,9 +77,7 @@ class DebugActivity : AppCompatActivity() {
 //                log("Is ok")
 //            }
 
-            val scannerWorker = PeriodicWorkRequestBuilder<ScanningWorker>(2, TimeUnit.HOURS)
-                    .build()
-            WorkManager.getInstance().enqueueUniquePeriodicWork("scanning_worker_x", ExistingPeriodicWorkPolicy.REPLACE, scannerWorker)
+            manager.stopAllWorkers()
         }
     }
 

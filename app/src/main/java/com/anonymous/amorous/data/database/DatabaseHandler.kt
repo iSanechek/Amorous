@@ -5,6 +5,7 @@ import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.util.Log
 import androidx.core.database.sqlite.transaction
 import com.anonymous.amorous.data.Candidate
 import com.anonymous.amorous.data.Event
@@ -16,6 +17,7 @@ interface LocalDatabase {
     fun updateCandidate(item: Candidate)
     fun getCandidates(): List<Candidate>
     fun getCandidate(id: Int): Candidate
+    fun removeCandidate(candidate: Candidate)
     fun clearDb()
     fun getCandidates(select: String, args: Array<String>?): List<Candidate>
 
@@ -27,12 +29,12 @@ interface LocalDatabase {
 
 class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(context, "candidate.db", null, 4) {
 
+
     override fun saveCandidate(candidate: Candidate) {
         val db = this@DatabaseHandler.writableDatabase
         db.transaction {
             insert(Candidate.TABLE_NAME, null, getCvFromCandidate(candidate))
         }
-        db.close()
     }
 
     override fun saveEvent(event: Event) {
@@ -40,7 +42,6 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
         db.transaction {
             insert(Event.TABLE_NAME, null, getCvFromEvent(event))
         }
-        db.close()
     }
 
     override fun getEvent(id: String): Event {
@@ -50,7 +51,6 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
         c?.moveToFirst()
         val event = getEventItem(c)
         c.close()
-        db.close()
         return event
     }
 
@@ -60,7 +60,6 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
         db.transaction {
             update(Event.TABLE_NAME, v, "${Event.COLUMN_ID} = ${event.id}", null)
         }
-        db.close()
     }
 
     override fun clearEvents() {
@@ -68,7 +67,6 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
         db.transaction {
             delete(Event.TABLE_NAME, null, null)
         }
-        db.close()
     }
 
     override fun saveCandidates(items: List<Candidate>) {
@@ -103,7 +101,6 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
                 }
             }
         }
-        db.close()
     }
 
     override fun updateCandidate(item: Candidate) {
@@ -112,7 +109,6 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
         db.transaction {
             update(Candidate.TABLE_NAME, v, "${Candidate.COLUMN_UID} = ${item.uid}", null)
         }
-        db.close()
     }
 
     override fun getCandidates(): List<Candidate> = getCandidates("SELECT * FROM ${Candidate.TABLE_NAME}", null)
@@ -129,7 +125,6 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
             }
         }
         c.close()
-        db.close()
         return temp
     }
 
@@ -140,8 +135,21 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
         c?.moveToFirst()
         val item = getCandidateItem(c)
         c.close()
-        db.close()
         return item
+    }
+
+    override fun removeCandidate(candidate: Candidate) {
+        val id = candidate.uid
+        id ?: return
+        val db = this@DatabaseHandler.writableDatabase
+//        val s = "DELETE FROM ${Candidate.TABLE_NAME} WHERE ${Candidate.COLUMN_UID} = $id"
+//        val c = db.rawQuery(s, null)
+//        c?.moveToFirst()
+
+        Log.d("Boom", "Boom11")
+        db.transaction {
+            delete(Candidate.TABLE_NAME, "${Candidate.COLUMN_UID} =?", arrayOf("$id"))
+        }
     }
 
     override fun clearDb() {

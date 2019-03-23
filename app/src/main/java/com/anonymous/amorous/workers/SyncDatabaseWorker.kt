@@ -27,8 +27,9 @@ class SyncDatabaseWorker(
                 else -> for (candidate in cache) {
                     addEvent("Upload thumbnail for candidate ${candidate.name}")
                     upload.uploadBitmap(candidate) {
-                        database.updateCandidate(it)
-                        remoteDatabase.writeCandidateInDatabase("", candidate)
+                        val c = it.copy(thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_DONE)
+                        database.updateCandidate(c)
+                        remoteDatabase.writeCandidateInDatabase("", c)
                     }
                 }
             }

@@ -47,6 +47,7 @@ data class Candidate(var uid: Int? = 0,
         const val ORIGINAL_UPLOAD_DONE = "original_upload_done"
         const val ORIGINAL_UPLOAD_FAIL = "original_upload_fail"
         const val ORIGINAL_UPLOAD_READE = "original_upload_reade"
+        const val ORIGINAL_UPLOAD_REMOVE = "original_upload_remove"
 
         const val IMAGE_TYPE = "image"
         const val VIDEO_TYPE = "video"
