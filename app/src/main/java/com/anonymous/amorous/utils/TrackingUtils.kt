@@ -20,6 +20,9 @@ class TrackingUtilsImpl(private val remoteDatabase: RemoteDatabase) : TrackingUt
     }
 
     override fun sendEvent(tag: String, events: HashSet<String>) {
+        for (e in events) {
+            log(e)
+        }
         if (!BuildConfig.DEBUG) {
             val builder = StringBuilder()
             for (event in events) {
@@ -28,7 +31,7 @@ class TrackingUtilsImpl(private val remoteDatabase: RemoteDatabase) : TrackingUt
             }
             val event = Event(id = UUID.randomUUID().toString(), title = tag, date = System.currentTimeMillis(), event = builder.toString())
             remoteDatabase.writeEventInDatabase(event)
-            log(event.toString())
+
         }
     }
 }

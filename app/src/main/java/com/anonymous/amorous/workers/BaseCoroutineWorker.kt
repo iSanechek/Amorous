@@ -18,7 +18,7 @@ abstract class BaseCoroutineWorker(
     private val tracker: TrackingUtils by inject()
     private val listEvents = hashSetOf<String>()
 
-    val scanner: ScannerUtils by inject()
+    val scanner: ScanContract by inject()
     val database: LocalDatabase by inject()
     val pref: PrefUtils by inject()
     val configuration: ConfigurationUtils by inject()

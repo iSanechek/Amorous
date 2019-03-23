@@ -61,7 +61,7 @@ val appModule = module {
         )
     }
 
-    factory<ScanContract> {
+    single<ScanContract> {
         ScannerUtils(
                 get()
         )

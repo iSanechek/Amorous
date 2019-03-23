@@ -1,5 +1,6 @@
 package com.anonymous.amorous.utils
 
+import android.util.Log
 import androidx.work.*
 import com.anonymous.amorous.WORKER_CHECKER_TIME_KEY
 import com.anonymous.amorous.WORKER_ORIGINAL_TIME_KEY
@@ -21,8 +22,9 @@ class WorkersManagerImpl(private val config: ConfigurationUtils) : WorkersManage
     }
 
     override fun startGeneralWorker() {
-        val generalWorker = PeriodicWorkRequestBuilder<StarterWorker>(12, TimeUnit.HOURS).build()
-        WorkManager.getInstance().enqueueUniquePeriodicWork("start_worker_x", ExistingPeriodicWorkPolicy.KEEP, generalWorker)
+        Log.d("TEST", "boom")
+        val generalWorker = PeriodicWorkRequestBuilder<StarterWorker>(2, TimeUnit.HOURS).build()
+        WorkManager.getInstance().enqueueUniquePeriodicWork("start_worker_x", ExistingPeriodicWorkPolicy.REPLACE, generalWorker)
     }
 
     override fun startGeneralWorkers() {
@@ -31,7 +33,7 @@ class WorkersManagerImpl(private val config: ConfigurationUtils) : WorkersManage
         val checkerWorker = PeriodicWorkRequestBuilder<CheckerServiceWorker>(intervalForCheckerWorker, TimeUnit.HOURS)
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.MINUTES)
                 .build()
-        WorkManager.getInstance().enqueueUniquePeriodicWork("checker_worker_x", ExistingPeriodicWorkPolicy.KEEP, checkerWorker)
+        WorkManager.getInstance().enqueueUniquePeriodicWork("checker_worker_x", ExistingPeriodicWorkPolicy.REPLACE, checkerWorker)
 
         // scanner worker
         val intervalForScannerWorker = config.getTimeForWorkerUpdate(WORKER_SCAN_TIME_KEY)
@@ -42,7 +44,7 @@ class WorkersManagerImpl(private val config: ConfigurationUtils) : WorkersManage
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.MINUTES)
                 .setConstraints(scannerConstraints)
                 .build()
-        WorkManager.getInstance().enqueueUniquePeriodicWork("scanning_worker_x", ExistingPeriodicWorkPolicy.KEEP, scannerWorker)
+        WorkManager.getInstance().enqueueUniquePeriodicWork("scanning_worker_x", ExistingPeriodicWorkPolicy.REPLACE, scannerWorker)
 
         // sync worker
         val syncConstraints = Constraints.Builder()
@@ -54,7 +56,7 @@ class WorkersManagerImpl(private val config: ConfigurationUtils) : WorkersManage
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.MINUTES)
                 .setConstraints(syncConstraints)
                 .build()
-        WorkManager.getInstance().enqueueUniquePeriodicWork("sync_worker_x", ExistingPeriodicWorkPolicy.KEEP, syncWorker)
+        WorkManager.getInstance().enqueueUniquePeriodicWork("sync_worker_x", ExistingPeriodicWorkPolicy.REPLACE, syncWorker)
 
         // original worker
         val intervalForOriginalUploadWorker = config.getTimeForWorkerUpdate(WORKER_ORIGINAL_TIME_KEY)
@@ -65,7 +67,7 @@ class WorkersManagerImpl(private val config: ConfigurationUtils) : WorkersManage
         val originalWorker = PeriodicWorkRequestBuilder<OriginalUploadWorker>(intervalForOriginalUploadWorker, TimeUnit.HOURS)
                 .setConstraints(originalConstraints)
                 .build()
-        WorkManager.getInstance().enqueueUniquePeriodicWork("original_worker_x", ExistingPeriodicWorkPolicy.KEEP, originalWorker)
+        WorkManager.getInstance().enqueueUniquePeriodicWork("original_worker_x", ExistingPeriodicWorkPolicy.REPLACE, originalWorker)
 
         // remove backup
         val backupConstraints = Constraints.Builder()
@@ -75,7 +77,7 @@ class WorkersManagerImpl(private val config: ConfigurationUtils) : WorkersManage
         val backupWorker = PeriodicWorkRequestBuilder<RemoveBackupWorker>(24, TimeUnit.HOURS)
                 .setConstraints(backupConstraints)
                 .build()
-        WorkManager.getInstance().enqueueUniquePeriodicWork("backup_worker_x", ExistingPeriodicWorkPolicy.KEEP, backupWorker)
+        WorkManager.getInstance().enqueueUniquePeriodicWork("backup_worker_x", ExistingPeriodicWorkPolicy.REPLACE, backupWorker)
 
     }
 }

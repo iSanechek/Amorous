@@ -4,6 +4,8 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.work.BackoffPolicy
+import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.anonymous.amorous.DB_T_C
@@ -13,6 +15,7 @@ import com.anonymous.amorous.data.database.LocalDatabase
 import com.anonymous.amorous.service.AmorousService
 import com.anonymous.amorous.service.JobSchContract
 import com.anonymous.amorous.utils.*
+import com.anonymous.amorous.workers.ScanningWorker
 import com.anonymous.amorous.workers.SyncDatabaseWorker
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -60,11 +63,15 @@ class DebugActivity : AppCompatActivity() {
 
         debug_start.setOnClickListener {
 //            s.scheduleJob(this)
-            action.startAction {
-                manager.startGeneralWorker()
-                manager.startGeneralWorkers()
-                log("Is ok")
-            }
+//            action.startAction {
+//                manager.startGeneralWorker()
+//                manager.startGeneralWorkers()
+//                log("Is ok")
+//            }
+
+            val scannerWorker = PeriodicWorkRequestBuilder<ScanningWorker>(2, TimeUnit.HOURS)
+                    .build()
+            WorkManager.getInstance().enqueueUniquePeriodicWork("scanning_worker_x", ExistingPeriodicWorkPolicy.REPLACE, scannerWorker)
         }
     }
 
