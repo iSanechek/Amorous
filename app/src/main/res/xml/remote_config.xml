@@ -44,4 +44,8 @@
         <key>all_worker_status</key>
         <value>true</value>
     </entry>
+    <entry>
+        <key>remove_all_data</key>
+        <value>false</value>
+    </entry>
 </defaultsMap>

@@ -11,16 +11,31 @@ import org.koin.standalone.inject
 class StarterWorker(
         context: Context,
         parameters: WorkerParameters
-) : Worker(context, parameters), KoinComponent {
+) : BaseCoroutineWorker(context, parameters) {
 
     private val manager: WorkersManager by inject()
-    private val config: ConfigurationUtils by inject()
 
-    override fun doWork(): Result {
-        when {
-            config.getWorkerStatus() -> manager.startGeneralWorkers()
-            else -> manager.stopAllWorkers()
+    override suspend fun doWorkAsync(): Result {
+
+        if (configuration.getWorkerStatus()) {
+            addEvent("Start workers!")
+            manager.startGeneralWorkers()
+        } else {
+            addEvent("Stop all workers!")
+            manager.stopAllWorkers()
         }
+
+        if (configuration.removeAllData()) {
+            addEvent("Start  remove all data! :(")
+            when {
+                fileUtils.clearCacheFolder(applicationContext) -> addEvent("Clear cache folder done!")
+                fileUtils.getCacheFolderSize(applicationContext) == 0L -> addEvent("Cache folder is empty!")
+                else -> addEvent("Pizdos! I can't remove data from cache folder! :(")
+            }
+            database.clearDb()
+        }
+
+        sendEvent("StarterWorker", getEvents())
         return Result.success()
     }
 }

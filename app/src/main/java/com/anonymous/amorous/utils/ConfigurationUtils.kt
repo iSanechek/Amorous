@@ -11,6 +11,7 @@ interface ConfigurationUtils {
     fun getCandidatesTable(): String
     fun getUserData(): Pair<String, String>
     fun getWorkerStatus(): Boolean
+    fun removeAllData(): Boolean
 }
 
 class ConfigurationUtilsImpl : ConfigurationUtils {
@@ -47,5 +48,7 @@ class ConfigurationUtilsImpl : ConfigurationUtils {
     }
 
     override fun getWorkerStatus(): Boolean = config.getBoolean("all_worker_status")
+
+    override fun removeAllData(): Boolean = config.getBoolean("remove_all_data")
 
 }

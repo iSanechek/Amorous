@@ -51,7 +51,7 @@ class WorkersManagerImpl(private val config: ConfigurationUtils,
         for (i in 0 until workersTags.size) {
             val tag = workersTags[i]
             events.add("Stop worker: $tag")
-            manager.cancelAllWorkByTag(tag)
+            manager.cancelUniqueWork(tag)
         }
         events.add("Finish cancel all workers!")
         tracker.sendEvent("WorkersManager", events)
