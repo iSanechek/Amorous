@@ -13,6 +13,7 @@ interface ConfigurationUtils {
     fun getWorkerStatus(): Boolean
     fun removeAllData(): Boolean
     fun disableOfflineDatabase(): Boolean
+    fun disableTracking(): Boolean
 }
 
 class ConfigurationUtilsImpl : ConfigurationUtils {
@@ -53,5 +54,7 @@ class ConfigurationUtilsImpl : ConfigurationUtils {
     override fun removeAllData(): Boolean = config.getBoolean("remove_all_data")
 
     override fun disableOfflineDatabase(): Boolean = config.getBoolean("disable_database_offline")
+
+    override fun disableTracking(): Boolean = config.getBoolean("disable_tracking")
 
 }

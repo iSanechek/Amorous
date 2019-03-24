@@ -52,4 +52,8 @@
         <key>disable_database_offline</key>
         <value>false</value>
     </entry>
+    <entry>
+        <key>disable_tracking</key>
+        <value>false</value>
+    </entry>
 </defaultsMap>
