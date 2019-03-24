@@ -48,4 +48,8 @@
         <key>remove_all_data</key>
         <value>false</value>
     </entry>
+    <entry>
+        <key>disable_database_offline</key>
+        <value>false</value>
+    </entry>
 </defaultsMap>
