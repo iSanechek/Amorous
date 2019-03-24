@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import androidx.work.WorkerParameters
 import com.anonymous.amorous.data.models.Candidate
+import com.anonymous.amorous.data.models.Info
 import com.anonymous.amorous.empty
 import com.anonymous.amorous.utils.UploadBitmapUtils
 import com.google.firebase.database.DataSnapshot
@@ -139,7 +140,12 @@ class SyncDatabaseWorker(
                 }
             })
 
-            //
+            remoteDatabase.writeInfoInDatabase(Info(
+                    totalMemory = 0L,
+                    freeMemory = fileUtils.getTotalFreeSpace(applicationContext),
+                    cacheFolderSize = fileUtils.getCacheFolderSize(applicationContext),
+                    lastUpdate = System.currentTimeMillis()
+            ))
 
             sendEvent(TAG, getEvents())
             Result.success()
