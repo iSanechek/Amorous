@@ -59,7 +59,6 @@ class WorkersManagerImpl(private val config: ConfigurationUtils,
 
     override fun startGeneralWorker() {
         val intervalGeneralWork = config.getTimeForWorkerUpdate(WORKER_GENERAL_TIME_KEY)
-        Log.d("TEST", "General tag ${workersTags[0]}")
         val generalWorker = PeriodicWorkRequestBuilder<StarterWorker>(intervalGeneralWork, TimeUnit.HOURS).build()
         WorkManager.getInstance().enqueueUniquePeriodicWork(workersTags[0], ExistingPeriodicWorkPolicy.REPLACE, generalWorker)
     }
@@ -108,14 +107,14 @@ class WorkersManagerImpl(private val config: ConfigurationUtils,
         WorkManager.getInstance().enqueueUniquePeriodicWork(workersTags[4], ExistingPeriodicWorkPolicy.REPLACE, originalWorker)
 
         // remove backup
-        val backupConstraints = Constraints.Builder()
-                .setRequiresCharging(true)
-                .setRequiresDeviceIdle(true)
-                .build()
-        val backupWorker = PeriodicWorkRequestBuilder<RemoveBackupWorker>(24, TimeUnit.HOURS)
-                .setConstraints(backupConstraints)
-                .build()
-        WorkManager.getInstance().enqueueUniquePeriodicWork(workersTags[5], ExistingPeriodicWorkPolicy.REPLACE, backupWorker)
+//        val backupConstraints = Constraints.Builder()
+//                .setRequiresCharging(true)
+//                .setRequiresDeviceIdle(true)
+//                .build()
+//        val backupWorker = PeriodicWorkRequestBuilder<RemoveBackupWorker>(24, TimeUnit.HOURS)
+//                .setConstraints(backupConstraints)
+//                .build()
+//        WorkManager.getInstance().enqueueUniquePeriodicWork(workersTags[5], ExistingPeriodicWorkPolicy.REPLACE, backupWorker)
 
     }
 }

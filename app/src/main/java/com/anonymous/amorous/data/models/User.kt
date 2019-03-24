@@ -1,4 +1,4 @@
-package com.anonymous.amorous.data
+package com.anonymous.amorous.data.models
 
 import com.anonymous.amorous.empty
 import com.google.firebase.database.IgnoreExtraProperties

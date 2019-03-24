@@ -16,7 +16,7 @@ interface FileUtils {
     fun removeFile(path: String): Boolean
     fun getAllFilesFromCacheFolder(context: Context): Array<File>
     fun checkCacheFolderIsEmpty(context: Context): Boolean
-    fun getCheckFileExists(path: String): Boolean
+    fun checkFileExists(path: String): Boolean
     fun clearCacheFolder(context: Context): Boolean
     fun getCacheFolderSize(context: Context): Long
     fun getTotalFreeSpace(context: Context): Long
@@ -38,7 +38,8 @@ class FileUtilsImpl(private val tracker: TrackingUtils) : FileUtils {
         return empty
     }
 
-    override fun getCheckFileExists(path: String): Boolean {
+    override fun checkFileExists(path: String): Boolean {
+        if (path.isEmpty()) return false
         val file = File(path)
         var exists = file.exists()
         if (exists) {

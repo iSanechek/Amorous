@@ -1,11 +1,10 @@
 package com.anonymous.amorous.utils
 
 import com.anonymous.amorous.*
-import com.anonymous.amorous.data.Candidate
-import com.anonymous.amorous.data.Event
-import com.anonymous.amorous.data.Info
-import com.anonymous.amorous.data.User
-import com.anonymous.amorous.debug.logDebug
+import com.anonymous.amorous.data.models.Candidate
+import com.anonymous.amorous.data.models.Event
+import com.anonymous.amorous.data.models.Info
+import com.anonymous.amorous.data.models.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 
@@ -16,6 +15,7 @@ interface RemoteDatabase {
     fun userUid(): String
     fun writeEventInDatabase(event: Event)
     fun writeInfoInDatabase(info: Info)
+    fun updateCandidate(candidate: Candidate)
 }
 
 class DatabaseUtilsImpl : RemoteDatabase {
@@ -52,6 +52,10 @@ class DatabaseUtilsImpl : RemoteDatabase {
 
     override fun writeInfoInDatabase(info: Info) {
         db.child(DB_T_I).setValue(info)
+    }
+
+    override fun updateCandidate(candidate: Candidate) {
+
     }
 
     override fun userUid(): String = userUid

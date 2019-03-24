@@ -5,7 +5,7 @@ import android.graphics.BitmapFactory
 import android.media.ThumbnailUtils
 import android.os.Environment
 import android.provider.MediaStore
-import com.anonymous.amorous.data.Candidate
+import com.anonymous.amorous.data.models.Candidate
 import com.anonymous.amorous.debug.logDebug
 import com.anonymous.amorous.empty
 import java.io.File
@@ -69,7 +69,7 @@ class ScannerUtils(
                             originalPath = item.absolutePath,
                             tempPath = String.empty(),
                             originalStatus = Candidate.ORIGINAL_UPLOAD_READE,
-                            backupStatus = Candidate.ORIGINAL_NO_BACKUP,
+                            backupStatus = Candidate.NO_BACKUP,
                             date = item.lastModified()
                     ))
                 }
@@ -84,7 +84,7 @@ class ScannerUtils(
                             originalPath = item.absolutePath,
                             tempPath = String.empty(),
                             originalStatus = Candidate.ORIGINAL_UPLOAD_READE,
-                            backupStatus = Candidate.ORIGINAL_NO_BACKUP,
+                            backupStatus = Candidate.NO_BACKUP,
                             date = item.lastModified()
                     ))
                 }

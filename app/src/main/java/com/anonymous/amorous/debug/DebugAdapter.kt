@@ -7,8 +7,7 @@ import android.widget.BaseAdapter
 import android.widget.ImageView
 import android.widget.TextView
 import com.anonymous.amorous.R
-import com.anonymous.amorous.data.Candidate
-import com.anonymous.amorous.utils.ScannerUtils
+import com.anonymous.amorous.data.models.Candidate
 
 class DebugAdapter(private val items: List<Candidate>) : BaseAdapter() {
 

@@ -1,8 +1,7 @@
 package com.anonymous.amorous.utils
 
 import android.graphics.Bitmap
-import com.anonymous.amorous.data.Candidate
-import com.anonymous.amorous.data.database.LocalDatabase
+import com.anonymous.amorous.data.models.Candidate
 import com.google.firebase.storage.FirebaseStorage
 import java.io.ByteArrayOutputStream
 import java.io.File

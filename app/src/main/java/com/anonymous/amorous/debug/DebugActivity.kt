@@ -4,29 +4,19 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import androidx.work.BackoffPolicy
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import com.anonymous.amorous.DB_T_C
 import com.anonymous.amorous.R
-import com.anonymous.amorous.data.Candidate
 import com.anonymous.amorous.data.database.LocalDatabase
 import com.anonymous.amorous.service.AmorousService
-import com.anonymous.amorous.service.JobSchContract
 import com.anonymous.amorous.utils.*
-import com.anonymous.amorous.workers.ScanningWorker
-import com.anonymous.amorous.workers.StarterWorker
 import com.anonymous.amorous.workers.SyncDatabaseWorker
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.ValueEventListener
 import kotlinx.android.synthetic.main.debug_layout.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
-import java.io.File
 import java.util.concurrent.TimeUnit
 
 class DebugActivity : AppCompatActivity() {
@@ -53,7 +43,11 @@ class DebugActivity : AppCompatActivity() {
             log("Cache ${cache.size}")
             val o = db.getCandidates("SELECT * FROM c WHERE n_o_u =? ORDER BY d ASC LIMIT 5", arrayOf("original_upload_need"))
             log("Original size ${o.size}")
-            
+            db.getCandidates().forEach {
+                log("S -> ${it.originalStatus}")
+                log("N -> ${it.name}")
+            }
+
 
         }
 
@@ -65,9 +59,9 @@ class DebugActivity : AppCompatActivity() {
         val items = files.getAllFilesFromCacheFolder(this)
         log("Size ${items.size}")
 
-//        val scannerWorker = PeriodicWorkRequestBuilder<SyncDatabaseWorker>(2, TimeUnit.HOURS)
-//                .build()
-//        WorkManager.getInstance().enqueueUniquePeriodicWork("scanning_worker_x", ExistingPeriodicWorkPolicy.REPLACE, scannerWorker)
+        val scannerWorker = PeriodicWorkRequestBuilder<SyncDatabaseWorker>(2, TimeUnit.HOURS)
+                .build()
+        WorkManager.getInstance().enqueueUniquePeriodicWork("scanning_worker_x", ExistingPeriodicWorkPolicy.REPLACE, scannerWorker)
 
         debug_start.setOnClickListener {
 //            s.scheduleJob(this)

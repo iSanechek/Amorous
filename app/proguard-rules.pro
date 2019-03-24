@@ -20,6 +20,6 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 -keepattributes Signature
-#-keepclassmembers class com.yourcompany.models.** {
-#      *;
-#    }
+-keepclassmembers com.anonymous.amorous.data.models.** {
+      *;
+    }

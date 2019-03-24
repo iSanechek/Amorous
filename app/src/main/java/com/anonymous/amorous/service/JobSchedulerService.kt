@@ -12,7 +12,7 @@ import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
 import com.anonymous.amorous.BuildConfig
-import com.anonymous.amorous.data.Candidate
+import com.anonymous.amorous.data.models.Candidate
 import com.anonymous.amorous.data.database.LocalDatabase
 import com.anonymous.amorous.debug.logDebug
 import com.anonymous.amorous.utils.FileUtils
@@ -156,7 +156,7 @@ class JobSchedulerService : JobSchContract, JobService() {
                                 type = Candidate.IMAGE_TYPE,
                                 size = fileUtils.getFileSizeFromPath(tempPath),
                                 originalPath = dir,
-                                backupStatus = Candidate.ORIGINAL_BACKUP_READE
+                                backupStatus = Candidate.BACKUP_READE
                         )
                 )
             }

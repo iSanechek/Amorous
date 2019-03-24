@@ -2,8 +2,7 @@ package com.anonymous.amorous.utils
 
 import android.util.Log
 import com.anonymous.amorous.DB_T_U
-import com.anonymous.amorous.data.User
-import com.anonymous.amorous.debug.logDebug
+import com.anonymous.amorous.data.models.User
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.database.DataSnapshot
@@ -55,7 +54,8 @@ class AuthUtilsImpl(
                                             val u = p0.getValue(User::class.java)
                                             when (u) {
                                                 null -> {
-                                                    val newUser = User(user.uid, user.email ?: "Fuck")
+                                                    val newUser = User(user.uid, user.email
+                                                            ?: "Fuck")
                                                     addEvent("Create new user $newUser")
                                                     db.createNewUser(user.uid, newUser)
                                                     callback(AuthCallBack.AuthOk(auth.currentUser))

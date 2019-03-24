@@ -1,4 +1,4 @@
-package com.anonymous.amorous.data
+package com.anonymous.amorous.data.models
 
 import com.anonymous.amorous.empty
 import com.google.firebase.database.Exclude
@@ -47,15 +47,15 @@ data class Candidate(var uid: Int? = 0,
         const val ORIGINAL_UPLOAD_DONE = "original_upload_done"
         const val ORIGINAL_UPLOAD_FAIL = "original_upload_fail"
         const val ORIGINAL_UPLOAD_READE = "original_upload_reade"
-        const val ORIGINAL_UPLOAD_REMOVE = "original_upload_remove"
+        const val ORIGINAL_FILE_REMOVED = "original_file_removed"
 
         const val IMAGE_TYPE = "image"
         const val VIDEO_TYPE = "video"
 
-        const val ORIGINAL_NEED_BACKUP = "original_need_backup"
-        const val ORIGINAL_NO_BACKUP = "original_no_backup"
-        const val ORIGINAL_NEED_REMOVE = "original_remove_backup"
-        const val ORIGINAL_BACKUP_READE = "original_reade_backup"
+        const val NEED_BACKUP = "original_need_backup"
+        const val NO_BACKUP = "original_no_backup"
+        const val BACKUP_NEED_REMOVE = "original_remove_backup"
+        const val BACKUP_READE = "original_reade_backup"
 
         const val THUMBNAIL_UPLOAD_DONE = "thumbnail_upload_done"
         const val THUMBNAIL_UPLOAD_FAIL = "thumbnail_upload_fail"

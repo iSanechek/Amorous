@@ -2,8 +2,7 @@ package com.anonymous.amorous.workers
 
 import android.content.Context
 import androidx.work.WorkerParameters
-import com.anonymous.amorous.data.Candidate
-import com.anonymous.amorous.empty
+import com.anonymous.amorous.data.models.Candidate
 import com.anonymous.amorous.utils.UploadBitmapUtils
 import org.koin.standalone.inject
 
@@ -20,12 +19,12 @@ class OriginalUploadWorker(
         when {
             cache.isNotEmpty() -> for (candidate in cache) {
                 val path = when {
-                    candidate.backupStatus == Candidate.ORIGINAL_BACKUP_READE -> candidate.tempPath
+                    candidate.backupStatus == Candidate.BACKUP_READE -> candidate.tempPath
                     else -> candidate.originalPath
                 }
                 when {
                     path != null -> {
-                        val isFileExists = fileUtils.getCheckFileExists(path)
+                        val isFileExists = fileUtils.checkFileExists(path)
                         when {
                             isFileExists -> upload.uploadBitmap(candidate) {
                                 addEvent("Upload original for ${candidate.name} is done!")

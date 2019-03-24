@@ -2,7 +2,7 @@ package com.anonymous.amorous.utils
 
 import android.util.Log
 import com.anonymous.amorous.BuildConfig
-import com.anonymous.amorous.data.Event
+import com.anonymous.amorous.data.models.Event
 import java.util.*
 import kotlin.collections.HashSet
 

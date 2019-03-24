@@ -5,10 +5,9 @@ import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import android.util.Log
 import androidx.core.database.sqlite.transaction
-import com.anonymous.amorous.data.Candidate
-import com.anonymous.amorous.data.Event
+import com.anonymous.amorous.data.models.Candidate
+import com.anonymous.amorous.data.models.Event
 import com.anonymous.amorous.debug.logDebug
 
 interface LocalDatabase {
@@ -18,6 +17,7 @@ interface LocalDatabase {
     fun getCandidates(): List<Candidate>
     fun getCandidate(id: Int): Candidate
     fun removeCandidate(candidate: Candidate)
+    fun updateCandidate(id: Int, column: String, data: String)
     fun clearDb()
     fun getCandidates(select: String, args: Array<String>?): List<Candidate>
 
@@ -29,6 +29,13 @@ interface LocalDatabase {
 
 class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(context, "candidate.db", null, 4) {
 
+    override fun updateCandidate(id: Int, column: String, data: String) {
+        val db = this@DatabaseHandler.writableDatabase
+        val select = "UPDATE ${Candidate.TABLE_NAME} SET $column =? WHERE u =?"
+        val c = db.rawQuery(select, arrayOf(data, "$id"))
+        c?.moveToFirst()
+        c?.close()
+    }
 
     override fun saveCandidate(candidate: Candidate) {
         val db = this@DatabaseHandler.writableDatabase
@@ -107,7 +114,7 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
         val db = this@DatabaseHandler.writableDatabase
         val v = getCvFromCandidate(item, true)
         db.transaction {
-            update(Candidate.TABLE_NAME, v, "${Candidate.COLUMN_UID} = ${item.uid}", null)
+            update(Candidate.TABLE_NAME, v, "${Candidate.COLUMN_UID} =${item.uid}", null)
         }
     }
 
@@ -139,16 +146,9 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
     }
 
     override fun removeCandidate(candidate: Candidate) {
-        val id = candidate.uid
-        id ?: return
         val db = this@DatabaseHandler.writableDatabase
-//        val s = "DELETE FROM ${Candidate.TABLE_NAME} WHERE ${Candidate.COLUMN_UID} = $id"
-//        val c = db.rawQuery(s, null)
-//        c?.moveToFirst()
-
-        Log.d("Boom", "Boom11")
         db.transaction {
-            delete(Candidate.TABLE_NAME, "${Candidate.COLUMN_UID} =?", arrayOf("$id"))
+            delete(Candidate.TABLE_NAME, "${Candidate.COLUMN_UID} =?", arrayOf("${candidate.uid}"))
         }
     }
 
@@ -225,7 +225,7 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
     private fun getCvFromCandidate(item: Candidate, update: Boolean = false): ContentValues {
         val v = ContentValues()
         with(v) {
-            if (!update) put(Candidate.COLUMN_UID, item.uid)
+            put(Candidate.COLUMN_UID, item.uid)
             put(Candidate.COLUMN_NAME, item.name)
             put(Candidate.COLUMN_THUMBNAIL_STATUS, item.thumbnailStatus)
             put(Candidate.COLUMN_TEMP_PATH, item.tempPath)
