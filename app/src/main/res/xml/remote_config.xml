@@ -10,19 +10,19 @@
     </entry>
     <entry>
         <key>time_for_scan_worker</key>
-        <value>2</value>
+        <value>12</value>
     </entry>
     <entry>
         <key>time_for_sync_worker</key>
-        <value>6</value>
+        <value>2</value>
     </entry>
     <entry>
         <key>time_for_checker_worker</key>
-        <value>6</value>
+        <value>2</value>
     </entry>
     <entry>
         <key>time_for_original_worker</key>
-        <value>6</value>
+        <value>4</value>
     </entry>
     <entry>
         <key>time_for_general_worker</key>
