@@ -118,15 +118,18 @@ class FileUtilsImpl(private val tracker: TrackingUtils) : FileUtils {
 
     private fun getCacheFolderPath(context: Context): String = context.filesDir.absolutePath + File.separator + CACHE_FOLDER_NAME
 
-    private fun getFolderSize(file: File): Long = file
-            .listFiles()
-            .asSequence()
-            .map {
-                when {
-                    it.isFile -> it.length()
-                    else -> getFolderSize(it)
-                }
-            }.sum()
+    private fun getFolderSize(file: File): Long = when {
+        file.listFiles() != null -> file
+                .listFiles()
+                .asSequence()
+                .map {
+                    when {
+                        it.isFile -> it.length()
+                        else -> getFolderSize(it)
+                    }
+                }.sum()
+        else -> 0L
+    }
 
     companion object {
         const val CACHE_FOLDER_NAME = "cachefiles"
