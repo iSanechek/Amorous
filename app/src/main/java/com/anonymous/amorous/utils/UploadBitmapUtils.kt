@@ -1,6 +1,10 @@
 package com.anonymous.amorous.utils
 
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.media.ThumbnailUtils
+import android.provider.MediaStore
+import android.util.Log
 import com.anonymous.amorous.data.models.Candidate
 import com.google.firebase.storage.FirebaseStorage
 import java.io.ByteArrayOutputStream
@@ -8,64 +12,73 @@ import java.io.File
 import java.io.FileInputStream
 
 interface UploadBitmapUtils {
-    fun uploadBitmap(candidate: Candidate, callback: (Candidate) -> Unit)
+    fun uploadThumbnail(candidate: Candidate, callback: (Candidate) -> Unit)
+    fun uploadOriginal(candidate: Candidate, callback: (Candidate) -> Unit)
 }
 
 class UploadBitmapUtilsImpl(
-        private val scanner: ScanContract,
         private val tracker: TrackingUtils
 ) : UploadBitmapUtils {
 
     private val events = hashSetOf<String>()
-
-    override fun uploadBitmap(candidate: Candidate, callback: (Candidate) -> Unit) {
+    override fun uploadThumbnail(candidate: Candidate, callback: (Candidate) -> Unit) {
+        addEvent("Start upload thumbnail for ${candidate.name}!")
         val storage = FirebaseStorage.getInstance()
         val imageRef = storage.reference
-        when {
-            candidate.originalStatus == Candidate.ORIGINAL_UPLOAD_NEED -> {
-                addEvent("Start upload original for ${candidate.name}")
-                val sr = imageRef.child("$O_R_F_N/${candidate.name}")
-                val stream = FileInputStream(File(candidate.originalPath))
-                val ut = sr.putStream(stream)
-                ut.addOnFailureListener {
-                    addEvent("Upload original error ${it.message}")
-                    tracker.sendEvent(TAG, events)
-                    callback(candidate.copy(originalStatus = Candidate.ORIGINAL_UPLOAD_FAIL))
-                }.addOnSuccessListener {
-                    addEvent("Upload original done! ${it.metadata?.name}")
-                    tracker.sendEvent(TAG, events)
-                    callback(candidate.copy(originalStatus = Candidate.ORIGINAL_UPLOAD_DONE))
-                }
+        val path = getPath(candidate)
+        val sr = imageRef.child("$T_R_F_N/${path.substring(path.lastIndexOf("/") + 1)}")
+        if (path.isNotEmpty()) {
+            val bitmap = when {
+                candidate.type == Candidate.VIDEO_TYPE -> getVideoThumbnail(path)
+                else -> getImageThumbnail(path)
             }
-            else -> {
-                addEvent("Upload Thumbnail ${candidate.name}")
-                val sr = imageRef.child("$T_R_F_N/${candidate.name}.jpg")
-                val bitmap = when {
-                    candidate.type == Candidate.IMAGE_TYPE -> scanner.getImageThumbnail(candidate.originalPath!!)
-                    else -> scanner.getVideoThumbnail(candidate.originalPath!!)
-                }
-                val baos = ByteArrayOutputStream()
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos)
-                val data = baos.toByteArray()
-                val uploadTask = sr.putBytes(data)
-                uploadTask.addOnCompleteListener {
-                    if (it.isSuccessful) {
-                        addEvent("Upload thumbnail for ${candidate.name} is done!")
-                        tracker.sendEvent(TAG, events)
-                        callback(candidate.copy(thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_DONE))
-                    }
-                }.addOnFailureListener {
-                    addEvent("Upload thumbnail for ${candidate.name} is fail!")
-                    tracker.sendEvent(TAG, events)
-                    callback(candidate.copy(thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_FAIL))
-                }
+            val baos = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos)
+            val data = baos.toByteArray()
+            val uploadTask = sr.putBytes(data)
+            uploadTask.addOnSuccessListener {
+                addEvent("Upload thumbnail for ${candidate.name} is done!")
+                tracker.sendEvent(TAG, events)
+                callback(candidate.copy(thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_DONE))
+            }.addOnFailureListener {
+                addEvent("Upload thumbnail for ${candidate.name} is fail!")
+                tracker.sendEvent(TAG, events)
+                callback(candidate.copy(thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_FAIL))
             }
+        } else {
+            addEvent("Upload thumbnail for ${candidate.name} is fail! Path is null!")
+            tracker.sendEvent(TAG, events)
+            callback(candidate.copy(thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_FAIL))
+        }
+    }
+
+    override fun uploadOriginal(candidate: Candidate, callback: (Candidate) -> Unit) {
+        addEvent("Start upload original for ${candidate.name}!")
+        val storage = FirebaseStorage.getInstance()
+        val imageRef = storage.reference
+        val sr = imageRef.child("$O_R_F_N/${candidate.name}")
+        val stream = FileInputStream(File(getPath(candidate)))
+        val ut = sr.putStream(stream)
+        ut.addOnFailureListener {
+            addEvent("Upload original error ${it.message}!")
+            tracker.sendEvent(TAG, events)
+            callback(candidate.copy(originalStatus = Candidate.ORIGINAL_UPLOAD_FAIL))
+        }.addOnSuccessListener {
+            addEvent("Upload original done! ${it.metadata?.name}")
+            tracker.sendEvent(TAG, events)
+            callback(candidate.copy(originalStatus = Candidate.ORIGINAL_UPLOAD_DONE))
         }
     }
 
     private fun addEvent(event: String) {
         events.add(event)
     }
+
+    private fun getPath(candidate: Candidate): String = if (candidate.tempPath.isNotEmpty()) candidate.tempPath else candidate.originalPath
+
+    private fun getVideoThumbnail(path: String): Bitmap = ThumbnailUtils.createVideoThumbnail(path, MediaStore.Video.Thumbnails.MINI_KIND)
+
+    private fun getImageThumbnail(path: String): Bitmap = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(path), 200, 200)
 
     companion object {
         private const val T_R_F_N = "thumbnails"
