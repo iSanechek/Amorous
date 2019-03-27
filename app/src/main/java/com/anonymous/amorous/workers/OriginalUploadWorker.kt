@@ -1,7 +1,9 @@
 package com.anonymous.amorous.workers
 
 import android.content.Context
+import android.util.Log
 import androidx.work.WorkerParameters
+import com.anonymous.amorous.DB_T_C
 import com.anonymous.amorous.data.models.Candidate
 import com.anonymous.amorous.utils.UploadBitmapUtils
 import org.koin.standalone.inject
@@ -15,7 +17,7 @@ class OriginalUploadWorker(
 
     override suspend fun doWorkAsync(): Result = try {
 
-        val cache = database.getCandidates("SELECT * FROM c WHERE n_o_u =? ORDER BY d ASC LIMIT 5", arrayOf("original_upload_need"))
+        val cache = database.getCandidates("SELECT * FROM c WHERE ptu =? ORDER BY d ASC LIMIT 5", arrayOf("original_upload_need"))
         when {
             cache.isNotEmpty() -> for (candidate in cache) {
                 val path = when {
@@ -23,16 +25,15 @@ class OriginalUploadWorker(
                     else -> candidate.originalPath
                 }
                 when {
-                    path != null -> {
-                        val isFileExists = fileUtils.checkFileExists(path)
+                    path.isNotEmpty() -> {
                         when {
-                            isFileExists -> upload.uploadBitmap(candidate) {
-                                addEvent("Upload original for ${candidate.name} is done!")
-                                database.updateCandidate(it)
-                            }
-                            else -> {
-                                addEvent("Original file for ${candidate.name} remove!")
-                                database.removeCandidate(candidate)
+                            fileUtils.checkFileExists(path) -> up(candidate)
+                            else -> when {
+                                fileUtils.checkFileExists(candidate.originalPath) -> up(candidate)
+                                else -> {
+                                    database.removeCandidate(candidate)
+                                    remoteDatabase.updateCandidate(candidate.copy(originalStatus = Candidate.ORIGINAL_FILE_REMOVED, date = System.currentTimeMillis()))
+                                }
                             }
                         }
                     }
@@ -40,10 +41,17 @@ class OriginalUploadWorker(
                 }
             }
             else -> addEvent("Candidate for upload original is empty!")
-        }
+       }
         sendEvent("OriginalUploadWorker", getEvents())
         Result.success()
     } catch (e: Exception) {
         Result.retry()
+    }
+
+    private fun up(candidate: Candidate) {
+        upload.uploadOriginal(candidate) {
+            database.updateCandidate(it)
+            remoteDatabase.updateCandidate(it)
+        }
     }
 }
