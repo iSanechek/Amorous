@@ -6,37 +6,41 @@ import com.google.firebase.database.IgnoreExtraProperties
 
 //
 @IgnoreExtraProperties
-data class Candidate(var uid: Int? = 0,
-                     var name: String? = String.empty(),
-                     var thumbnailStatus: String? = String.empty(),
-                     var tempPath: String? = String.empty(),
-                     var originalPath: String? = String.empty(),
-                     var size: String? = String.empty(),
-                     var originalStatus: String? = String.empty(),
-                     var type: String? = String.empty(),
-                     var backupStatus: String? = String.empty(),
-                     var date: Long? = 0L) {
+data class Candidate(var uid: Int = 0,
+                     var remoteUid: String = String.empty(),
+                     var name: String = String.empty(),
+                     var thumbnailStatus: String = String.empty(),
+                     var tempPath: String = String.empty(),
+                     var originalPath: String = String.empty(),
+                     var size: Long = 0L,
+                     var originalStatus: String = String.empty(),
+                     var type: String = String.empty(),
+                     var backupStatus: String = String.empty(),
+                     var date: Long = 0L) {
 
     @Exclude
     fun toMap(): Map<String, Any?> = mapOf(
             "uid" to uid,
+            "remoteUid" to remoteUid,
             "name" to name,
             "thumbnailStatus" to thumbnailStatus,
             "tempPath" to tempPath,
             "size" to size,
             "originalStatus" to originalStatus,
+            "originalPath" to originalPath,
             "type" to type,
             "backupStatus" to backupStatus,
             "date" to date)
 
     companion object {
         const val COLUMN_UID = "u"
+        const val COLUMN_REMOTE_UID = "r_u"
         const val COLUMN_NAME = "n"
         const val COLUMN_THUMBNAIL_STATUS = "r_c_u"
         const val COLUMN_TEMP_PATH = "t_l_b_p"
         const val COLUMN_ORIGINAL_PATH = "o_b_p"
         const val COLUMN_SIZE = "s"
-        const val COLUMN_ORIGINAL_STATUS = "n_o_u"
+        const val COLUMN_ORIGINAL_STATUS = "ptu"
         const val COLUMN_TYPE = "t"
         const val COLUMN_BACKUP_STATUS = "n_l_b"
         const val COLUMN_DATE = "d"
