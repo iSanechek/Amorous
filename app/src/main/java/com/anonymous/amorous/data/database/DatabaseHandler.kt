@@ -4,7 +4,10 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
+import android.database.sqlite.SQLiteDatabase.CONFLICT_REPLACE
 import android.database.sqlite.SQLiteOpenHelper
+import android.text.TextUtils
+import android.util.Log
 import androidx.core.database.sqlite.transaction
 import com.anonymous.amorous.data.models.Candidate
 import com.anonymous.amorous.data.models.Event
@@ -15,65 +18,72 @@ interface LocalDatabase {
     fun saveCandidate(candidate: Candidate)
     fun updateCandidate(item: Candidate)
     fun getCandidates(): List<Candidate>
-    fun getCandidate(id: Int): Candidate
+    fun getCandidate(id: String): Candidate
     fun removeCandidate(candidate: Candidate)
-    fun updateCandidate(id: Int, column: String, data: String)
     fun clearDb()
     fun getCandidates(select: String, args: Array<String>?): List<Candidate>
 
     fun saveEvent(event: Event)
-    fun getEvent(id: String): Event
-    fun updateEvent(event: Event)
-    fun clearEvents()
+    fun getEvents(): List<Event>
+    fun clearEvents(ids: Set<String>)
 }
 
-class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(context, "candidate.db", null, 4) {
+class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(context, "candidate.db", null, 7) {
 
-    override fun updateCandidate(id: Int, column: String, data: String) {
+    override fun getEvents(): List<Event> {
+        val temp = mutableListOf<Event>()
         val db = this@DatabaseHandler.writableDatabase
-        val select = "UPDATE ${Candidate.TABLE_NAME} SET $column =? WHERE u =?"
-        val c = db.rawQuery(select, arrayOf(data, "$id"))
-        c?.moveToFirst()
-        c?.close()
-    }
-
-    override fun saveCandidate(candidate: Candidate) {
-        val db = this@DatabaseHandler.writableDatabase
-        db.transaction {
-            insert(Candidate.TABLE_NAME, null, getCvFromCandidate(candidate))
+        val select = "SELECT * FROM ${Event.TABLE_NAME} ORDER BY ${Event.COLUMN_DATE} ASC"
+        val c = db.rawQuery(select, null)
+        if (c != null) {
+            if (c.moveToFirst()) {
+                do {
+                    temp.add(getEventItem(c))
+                } while (c.moveToNext())
+            }
         }
+        c?.close()
+        return temp
     }
 
     override fun saveEvent(event: Event) {
         val db = this@DatabaseHandler.writableDatabase
         db.transaction {
-            insert(Event.TABLE_NAME, null, getCvFromEvent(event))
+            insertWithOnConflict(Event.TABLE_NAME, null, getCvFromEvent(event), SQLiteDatabase.CONFLICT_REPLACE)
+        }
+        db.close()
+    }
+
+    override fun clearEvents(ids: Set<String>) {
+        val db = this@DatabaseHandler.writableDatabase
+        for (id in ids) {
+            db.transaction {
+                delete(Event.TABLE_NAME, "${Event.COLUMN_ID} IN (?)", arrayOf(id))
+            }
         }
     }
 
-    override fun getEvent(id: String): Event {
+    override fun getCandidates(select: String, args: Array<String>?): List<Candidate> {
+        val temp = mutableListOf<Candidate>()
         val db = this@DatabaseHandler.writableDatabase
-        val select = "SELECT * FROM ${Event.TABLE_NAME} WHERE ${Event.COLUMN_ID} = $id"
-        val c = db.rawQuery(select, null)
-        c?.moveToFirst()
-        val event = getEventItem(c)
+        val c = db.rawQuery(select, args)
+        if (c != null) {
+            if (c.moveToFirst()) {
+                do {
+                    temp.add(getCandidateItem(c))
+                } while (c.moveToNext())
+            }
+        }
         c.close()
-        return event
+        return temp
     }
 
-    override fun updateEvent(event: Event) {
-        val db = this@DatabaseHandler.writableDatabase
-        val v = getCvFromEvent(event, true)
-        db.transaction {
-            update(Event.TABLE_NAME, v, "${Event.COLUMN_ID} = ${event.id}", null)
-        }
-    }
-
-    override fun clearEvents() {
+    override fun saveCandidate(candidate: Candidate) {
         val db = this@DatabaseHandler.writableDatabase
         db.transaction {
-            delete(Event.TABLE_NAME, null, null)
+            insertWithOnConflict(Candidate.TABLE_NAME, null, getCvFromCandidate(candidate), SQLiteDatabase.CONFLICT_REPLACE)
         }
+        db.close()
     }
 
     override fun saveCandidates(items: List<Candidate>) {
@@ -82,9 +92,6 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
         val db = this@DatabaseHandler.writableDatabase
         when (count) {
             0 -> {
-                logDebug {
-                    "Db empty! Insert data!"
-                }
                 for (item in items) {
                     db.transaction {
                         insert(Candidate.TABLE_NAME, null, getCvFromCandidate(item))
@@ -92,11 +99,6 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
                 }
             }
             else -> {
-                logDebug {
-                    "Db is not empty! Size $count"
-                }
-
-
                 val cacheIds = cacheItems.map { it.uid }.toSet()
                 for (item in items) {
                     when {
@@ -114,28 +116,13 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
         val db = this@DatabaseHandler.writableDatabase
         val v = getCvFromCandidate(item, true)
         db.transaction {
-            update(Candidate.TABLE_NAME, v, "${Candidate.COLUMN_UID} =${item.uid}", null)
+            update(Candidate.TABLE_NAME, v, "${Candidate.COLUMN_UID} =?", arrayOf("${item.uid}"))
         }
     }
 
     override fun getCandidates(): List<Candidate> = getCandidates("SELECT * FROM ${Candidate.TABLE_NAME}", null)
 
-    override fun getCandidates(select: String, args: Array<String>?): List<Candidate> {
-        val temp = mutableListOf<Candidate>()
-        val db = this@DatabaseHandler.writableDatabase
-        val c = db.rawQuery(select, args)
-        if (c != null) {
-            if (c.moveToFirst()) {
-                do {
-                    temp.add(getCandidateItem(c))
-                } while (c.moveToNext())
-            }
-        }
-        c.close()
-        return temp
-    }
-
-    override fun getCandidate(id: Int): Candidate {
+    override fun getCandidate(id: String): Candidate {
         val db = this@DatabaseHandler.writableDatabase
         val s = "SELECT * FROM ${Candidate.TABLE_NAME} WHERE ${Candidate.COLUMN_UID} = $id"
         val c = db.rawQuery(s, null)
@@ -162,11 +149,12 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
     override fun onCreate(db: SQLiteDatabase?) {
         val CREATE_TABLE_CANDIDATE = "CREATE TABLE ${Candidate.TABLE_NAME} (" +
                 "${Candidate.COLUMN_UID} $DB_COLUMN_INTEGER, " +
+                "${Candidate.COLUMN_REMOTE_UID} $DB_COLUMN_TEXT, " +
                 "${Candidate.COLUMN_NAME} $DB_COLUMN_TEXT, " +
                 "${Candidate.COLUMN_THUMBNAIL_STATUS} $DB_COLUMN_TEXT, " +
                 "${Candidate.COLUMN_TEMP_PATH} $DB_COLUMN_TEXT, " +
                 "${Candidate.COLUMN_ORIGINAL_PATH} $DB_COLUMN_TEXT, " +
-                "${Candidate.COLUMN_SIZE} $DB_COLUMN_TEXT, " +
+                "${Candidate.COLUMN_SIZE} $DB_COLUMN_INTEGER, " +
                 "${Candidate.COLUMN_ORIGINAL_STATUS} $DB_COLUMN_TEXT, " +
                 "${Candidate.COLUMN_TYPE} $DB_COLUMN_TEXT, " +
                 "${Candidate.COLUMN_BACKUP_STATUS} $DB_COLUMN_TEXT, " +
@@ -211,13 +199,14 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
     /*Candidates*/
     private fun getCandidateItem(c: Cursor) : Candidate = Candidate(
             uid = c.getInt(c.getColumnIndex(Candidate.COLUMN_UID)),
+            remoteUid = c.getString(c.getColumnIndex(Candidate.COLUMN_REMOTE_UID)),
             name = c.getString(c.getColumnIndex(Candidate.COLUMN_NAME)),
             backupStatus = c.getString(c.getColumnIndex(Candidate.COLUMN_BACKUP_STATUS)),
             originalStatus = c.getString(c.getColumnIndex(Candidate.COLUMN_ORIGINAL_STATUS)),
             originalPath = c.getString(c.getColumnIndex(Candidate.COLUMN_ORIGINAL_PATH)),
             tempPath = c.getString(c.getColumnIndex(Candidate.COLUMN_TEMP_PATH)),
             thumbnailStatus = c.getString(c.getColumnIndex(Candidate.COLUMN_THUMBNAIL_STATUS)),
-            size = c.getString(c.getColumnIndex(Candidate.COLUMN_SIZE)),
+            size = c.getLong(c.getColumnIndex(Candidate.COLUMN_SIZE)),
             type = c.getString(c.getColumnIndex(Candidate.COLUMN_TYPE)),
             date = c.getLong(c.getColumnIndex(Candidate.COLUMN_DATE))
     )
@@ -225,7 +214,8 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
     private fun getCvFromCandidate(item: Candidate, update: Boolean = false): ContentValues {
         val v = ContentValues()
         with(v) {
-            put(Candidate.COLUMN_UID, item.uid)
+            if (!update) put(Candidate.COLUMN_UID, item.uid)
+            put(Candidate.COLUMN_REMOTE_UID, item.remoteUid)
             put(Candidate.COLUMN_NAME, item.name)
             put(Candidate.COLUMN_THUMBNAIL_STATUS, item.thumbnailStatus)
             put(Candidate.COLUMN_TEMP_PATH, item.tempPath)
@@ -239,20 +229,6 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
         return v
     }
 
-    private fun removeCandidate(id: Int) {
-        val db = this@DatabaseHandler.writableDatabase
-//        val s = "DELETE FROM ${Candidate.TABLE_NAME} WHERE ${Candidate.COLUMN_UID} =:$id"
-//        val c = db.rawQuery(s, null)
-//        c.moveToFirst()
-//        c.close()
-
-        db.transaction {
-            delete(Candidate.TABLE_NAME, "${Candidate.COLUMN_UID} =?", arrayOf("$id"))
-        }
-
-        db.close()
-    }
-
     private fun getCount(): Int {
         val db = this@DatabaseHandler.readableDatabase
         val s = "SELECT count(*) FROM ${Candidate.TABLE_NAME}"
@@ -260,7 +236,6 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
         c.moveToFirst()
         val count = c.getInt(0)
         c.close()
-        db.close()
         return count
     }
 
