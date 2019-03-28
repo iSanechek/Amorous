@@ -24,7 +24,6 @@ class AuthUtilsImpl(
         private val tracker: TrackingUtils
 ) : AuthUtils {
 
-    private val events = hashSetOf<String>()
 
     override fun checkAuthState(callback: (AuthCallBack) -> Unit) {
         val user = FirebaseAuth.getInstance().currentUser
@@ -34,7 +33,6 @@ class AuthUtilsImpl(
     override fun startAuth(callback: (AuthCallBack) -> Unit) {
         val auth = FirebaseAuth.getInstance()
         val userData = config.getUserData()
-        Log.d("TEST", "user data ${userData.first} ${userData.second}")
         auth.signInWithEmailAndPassword(userData.first, userData.second)
                 .addOnCompleteListener {
                     if (it.isSuccessful) {
@@ -70,18 +68,17 @@ class AuthUtilsImpl(
                         }
 
 
-                        tracker.sendEvent("AuthUtils", events)
+                        tracker.sendOnServer()
 
                     }
                 }.addOnFailureListener {
                     addEvent("Auth failure ${it.message}")
-                    Log.d("TEST", "Auth error ${it.message}")
-                    tracker.sendEvent("AuthUtils", events)
+                    tracker.sendOnServer()
                     callback(AuthCallBack.AuthError(it.message ?: ""))
                 }
     }
 
     private fun addEvent(msg: String) {
-        events.add(msg)
+        tracker.sendEvent("AuthUtils", msg)
     }
 }

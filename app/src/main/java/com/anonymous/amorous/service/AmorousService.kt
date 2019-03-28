@@ -16,17 +16,15 @@ class AmorousService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        track.sendEvent(TAG, hashSetOf("Service on create"))
-        action.startAction {
-            manager.startGeneralWorker()
-        }
+        track.sendEvent(TAG, "Service on create")
+
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int =
             START_REDELIVER_INTENT
 
     override fun onDestroy() {
-        track.sendEvent(TAG, hashSetOf("Service is destroy!"))
+        track.sendEvent(TAG, "Service is destroy!")
         super.onDestroy()
     }
 

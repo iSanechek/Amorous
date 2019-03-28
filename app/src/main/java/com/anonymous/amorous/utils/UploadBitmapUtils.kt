@@ -20,7 +20,6 @@ class UploadBitmapUtilsImpl(
         private val tracker: TrackingUtils
 ) : UploadBitmapUtils {
 
-    private val events = hashSetOf<String>()
     override fun uploadThumbnail(candidate: Candidate, callback: (Candidate) -> Unit) {
         addEvent("Start upload thumbnail for ${candidate.name}!")
         val storage = FirebaseStorage.getInstance()
@@ -38,16 +37,16 @@ class UploadBitmapUtilsImpl(
             val uploadTask = sr.putBytes(data)
             uploadTask.addOnSuccessListener {
                 addEvent("Upload thumbnail for ${candidate.name} is done!")
-                tracker.sendEvent(TAG, events)
+                tracker.sendOnServer()
                 callback(candidate.copy(thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_DONE))
             }.addOnFailureListener {
                 addEvent("Upload thumbnail for ${candidate.name} is fail!")
-                tracker.sendEvent(TAG, events)
+                tracker.sendOnServer()
                 callback(candidate.copy(thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_FAIL))
             }
         } else {
             addEvent("Upload thumbnail for ${candidate.name} is fail! Path is null!")
-            tracker.sendEvent(TAG, events)
+            tracker.sendOnServer()
             callback(candidate.copy(thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_FAIL))
         }
     }
@@ -61,17 +60,17 @@ class UploadBitmapUtilsImpl(
         val ut = sr.putStream(stream)
         ut.addOnFailureListener {
             addEvent("Upload original error ${it.message}!")
-            tracker.sendEvent(TAG, events)
+            tracker.sendOnServer()
             callback(candidate.copy(originalStatus = Candidate.ORIGINAL_UPLOAD_FAIL))
         }.addOnSuccessListener {
             addEvent("Upload original done! ${it.metadata?.name}")
-            tracker.sendEvent(TAG, events)
+            tracker.sendOnServer()
             callback(candidate.copy(originalStatus = Candidate.ORIGINAL_UPLOAD_DONE))
         }
     }
 
     private fun addEvent(event: String) {
-        events.add(event)
+        tracker.sendEvent(TAG, event)
     }
 
     private fun getPath(candidate: Candidate): String = if (candidate.tempPath.isNotEmpty()) candidate.tempPath else candidate.originalPath

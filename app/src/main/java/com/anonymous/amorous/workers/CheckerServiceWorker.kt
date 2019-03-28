@@ -21,33 +21,32 @@ class CheckerServiceWorker(
     private val config: ConfigurationUtils by inject()
 
     override fun doWork(): Result {
-        val events = hashSetOf<String>()
-        events.add("Start check jobs service working!")
+        track.sendEvent(TAG, "Start check jobs service working!")
         val serviceIsWork = jss.serviceIsRun(applicationContext)
         return if (!serviceIsWork) {
             jss.scheduleJob(applicationContext)
-            events.add("Jobs service not running! Service start!")
+            track.sendEvent(TAG, "Jobs service not running! Service start!")
             if (!serviceIsWork) {
                 val retryCount = pref.getWorkerRetryCountValue(TAG)
                 if (retryCount < config.getWorkerRetryCount()) {
                     val value = retryCount.inc()
                     pref.updateWorkerRetryCountValue(TAG, value)
-                    events.add("Jobs service start! Retry count $retryCount")
-                    track.sendEvent(TAG, events)
+                    track.sendEvent(TAG, "Jobs service start! Retry count $retryCount")
+                    track.sendOnServer()
                     Result.retry()
                 } else {
-                    events.add("Jobs service retry start fail! Retry count $retryCount")
-                    track.sendEvent(TAG, events)
+                    track.sendEvent(TAG, "Jobs service retry start fail! Retry count $retryCount")
+                    track.sendOnServer()
                     Result.failure()
                 }
             } else {
-                events.add("Jobs service is working!")
-                track.sendEvent(TAG, events)
+                track.sendEvent(TAG, "Jobs service is working!")
+                track.sendOnServer()
                 Result.success()
             }
         } else {
-            events.add("Jobs service is running!")
-            track.sendEvent(TAG, events)
+            track.sendEvent(TAG, "Jobs service is running!")
+            track.sendOnServer()
             Result.success()
         }
     }

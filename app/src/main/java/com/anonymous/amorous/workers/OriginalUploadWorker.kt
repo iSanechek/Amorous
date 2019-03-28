@@ -37,12 +37,12 @@ class OriginalUploadWorker(
                             }
                         }
                     }
-                    else -> addEvent("Candidate for upload original fail! Path empty")
+                    else -> sendEvent(TAG, "Candidate for upload original fail! Path empty")
                 }
             }
-            else -> addEvent("Candidate for upload original is empty!")
+            else -> sendEvent(TAG, "Candidate for upload original is empty!")
        }
-        sendEvent("OriginalUploadWorker", getEvents())
+        sendEvents()
         Result.success()
     } catch (e: Exception) {
         Result.retry()
@@ -53,5 +53,9 @@ class OriginalUploadWorker(
             database.updateCandidate(it)
             remoteDatabase.updateCandidate(it)
         }
+    }
+
+    companion object {
+        private const val TAG = "OriginalUploadWorker"
     }
 }

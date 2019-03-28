@@ -6,9 +6,9 @@ import android.media.ThumbnailUtils
 import android.os.Environment
 import android.provider.MediaStore
 import com.anonymous.amorous.data.models.Candidate
-import com.anonymous.amorous.debug.logDebug
 import com.anonymous.amorous.empty
 import java.io.File
+import java.util.*
 
 sealed class ScanCallback {
     data class ResultOk(val items: List<Candidate>) : ScanCallback()
@@ -33,21 +33,14 @@ class ScannerUtils(
         val isExternalStorageReadable: Boolean = Environment.getExternalStorageState() in setOf(Environment.MEDIA_MOUNTED, Environment.MEDIA_MOUNTED_READ_ONLY)
         if (!isExternalStorageReadable) return ScanCallback.ResultFail(ScanCallback.Fail.NotReadable)
         val patterns = arrayListOf("Movies", "Pictures", "Download")
-        val directory = Environment.getExternalStorageDirectory()
+        val directory = File(Environment.getExternalStorageDirectory().path)
         val temp = mutableListOf<Candidate>()
         directory.listFiles()
                 .filter {
                     it.name in patterns
                 }
-                .filter {
-                    it.isDirectory
-                }
-                .forEachIndexed { index, file ->
-                    val result = findFiles(file)
-                    logDebug {
-                        "Save result size ${result.size} for index $index"
-                    }
-                    temp.addAll(result)
+                .forEach {
+                    temp.addAll(findFiles(it))
                 }
         return ScanCallback.ResultOk(temp)
     }
@@ -62,10 +55,10 @@ class ScannerUtils(
                 if (item.name.endsWith(".mp4", ignoreCase = true)) {
                     candidates.add(Candidate(
                             uid = item.name.hashCode(),
-                            name = item.nameWithoutExtension,
+                            name = item.name,
                             thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_NEED,
                             type = Candidate.VIDEO_TYPE,
-                            size = fileUtil.getReadableFileSize(item.length()),
+                            size = item.length(),
                             originalPath = item.absolutePath,
                             tempPath = String.empty(),
                             originalStatus = Candidate.ORIGINAL_UPLOAD_READE,
@@ -77,10 +70,10 @@ class ScannerUtils(
                 if (item.name.endsWith(".jpg", ignoreCase = true)) {
                     candidates.add(Candidate(
                             uid = item.name.hashCode(),
-                            name = item.nameWithoutExtension,
+                            name = item.name,
                             thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_NEED,
                             type = Candidate.IMAGE_TYPE,
-                            size = fileUtil.getReadableFileSize(item.length()),
+                            size = item.length(),
                             originalPath = item.absolutePath,
                             tempPath = String.empty(),
                             originalStatus = Candidate.ORIGINAL_UPLOAD_READE,
@@ -93,15 +86,7 @@ class ScannerUtils(
         return candidates
     }
 
-
     override fun getImageThumbnail(path: String): Bitmap = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(path), 200, 200)
 
     override fun getVideoThumbnail(path: String): Bitmap = ThumbnailUtils.createVideoThumbnail(path, MediaStore.Video.Thumbnails.MINI_KIND)
-
-//     private fun getReadableFileSize(size: Long): String {
-//        if (size <= 0) return "0"
-//        val units = arrayOf("B", "KB", "MB", "GB", "TB")
-//        val digitGroups = (Math.log10(size.toDouble()) / Math.log10(1024.0)).toInt()
-//        return DecimalFormat("#,##0.#").format(size / Math.pow(1024.0, digitGroups.toDouble())) + " " + units[digitGroups]
-//    }
 }

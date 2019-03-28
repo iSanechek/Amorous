@@ -45,16 +45,15 @@ class WorkersManagerImpl(private val config: ConfigurationUtils,
     }
 
     override fun stopAllWorkers() {
-        val events = hashSetOf<String>()
-        events.add("Start cancel all workers!")
+        addEvent("Start cancel all workers!")
         val manager = WorkManager.getInstance()
         for (i in 0 until workersTags.size) {
             val tag = workersTags[i]
-            events.add("Stop worker: $tag")
+            addEvent("Stop worker: $tag")
             manager.cancelUniqueWork(tag)
         }
-        events.add("Finish cancel all workers!")
-        tracker.sendEvent("WorkersManager", events)
+        addEvent("Finish cancel all workers!")
+        tracker.sendOnServer()
     }
 
     override fun startGeneralWorker() {
@@ -106,15 +105,9 @@ class WorkersManagerImpl(private val config: ConfigurationUtils,
                 .build()
         WorkManager.getInstance().enqueueUniquePeriodicWork(workersTags[4], ExistingPeriodicWorkPolicy.REPLACE, originalWorker)
 
-        // remove backup
-//        val backupConstraints = Constraints.Builder()
-//                .setRequiresCharging(true)
-//                .setRequiresDeviceIdle(true)
-//                .build()
-//        val backupWorker = PeriodicWorkRequestBuilder<RemoveBackupWorker>(24, TimeUnit.HOURS)
-//                .setConstraints(backupConstraints)
-//                .build()
-//        WorkManager.getInstance().enqueueUniquePeriodicWork(workersTags[5], ExistingPeriodicWorkPolicy.REPLACE, backupWorker)
+    }
 
+    private fun addEvent(event: String) {
+        tracker.sendEvent("WorkersManager", event)
     }
 }

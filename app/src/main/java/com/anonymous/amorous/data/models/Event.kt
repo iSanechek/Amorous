@@ -3,13 +3,14 @@ package com.anonymous.amorous.data.models
 import com.anonymous.amorous.empty
 import com.google.firebase.database.Exclude
 import com.google.firebase.database.IgnoreExtraProperties
+import java.util.*
 
 @IgnoreExtraProperties
 data class Event(
-        val id: String? = String.empty(),
-        val title: String? = String.empty(),
-        val date: Long? = 0L,
-        val event: String? = String.empty()
+        val id: String = String.empty(),
+        val title: String = String.empty(),
+        val date: Long = 0L,
+        val event: String = String.empty()
 ) {
 
     @Exclude
@@ -26,5 +27,8 @@ data class Event(
         const val COLUMN_TITLE = "title"
         const val COLUMN_DATE = "date"
         const val COLUMN_EVENT = "event"
+
+        fun getUid() = UUID.randomUUID().toString()
+        fun getTime() = System.currentTimeMillis()
     }
 }

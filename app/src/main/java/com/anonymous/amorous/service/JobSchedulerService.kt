@@ -18,6 +18,8 @@ import com.anonymous.amorous.debug.logDebug
 import com.anonymous.amorous.utils.FileUtils
 import kotlinx.coroutines.*
 import org.koin.android.ext.android.inject
+import java.io.File
+import java.util.*
 
 class JobSchedulerService : JobSchContract, JobService() {
 
@@ -64,13 +66,12 @@ class JobSchedulerService : JobSchContract, JobService() {
                                     while (cursor.moveToNext()) {
                                         val dir = cursor.getString(PROJECTION_DATA)
                                         if (dir.startsWith(DCIM_DIR)) {
-                                            val fileId = cursor.getInt(PROJECTION_ID)
+//                                            val fileId = cursor.getInt(PROJECTION_ID)
                                             val fileName = dir.substring(dir.lastIndexOf("/") + 1)
                                             jobsCache[fileName]?.cancel()
                                             jobsCache[fileName] = scope.launch {
                                                 try {
                                                     doWorkAsync(
-                                                            id = fileId,
                                                             dir = dir,
                                                             name = fileName
                                                     ).await()
@@ -142,19 +143,19 @@ class JobSchedulerService : JobSchContract, JobService() {
     @SuppressLint("NewApi")
     override fun a(context: Context): Int = bindService(context).schedule(jobInfo!!)
 
-    private suspend fun doWorkAsync(id: Int, dir: String, name: String): Deferred<Unit> = coroutineScope {
+    private suspend fun doWorkAsync(dir: String, name: String): Deferred<Unit> = coroutineScope {
         async {
             if (fileUtils.checkCreatedCacheFolder(this@JobSchedulerService)) {
                 val tempPath = fileUtils.copyToCacheFolder(this@JobSchedulerService, dir)
                 database.saveCandidate(
                         Candidate(
-                                uid = id,
+                                uid = name.hashCode(),
                                 name = name,
                                 thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_NEED,
                                 tempPath = tempPath,
                                 originalStatus = Candidate.ORIGINAL_UPLOAD_READE,
                                 type = Candidate.IMAGE_TYPE,
-                                size = fileUtils.getFileSizeFromPath(tempPath),
+                                size = fileUtils.getLongSizeFromPath(dir),
                                 originalPath = dir,
                                 backupStatus = Candidate.BACKUP_READE
                         )

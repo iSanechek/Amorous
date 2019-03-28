@@ -18,24 +18,24 @@ class StarterWorker(
     override suspend fun doWorkAsync(): Result {
 
         if (configuration.getWorkerStatus()) {
-            addEvent("Start workers!")
+            sendEvent("StarterWorker", "Start workers!")
             manager.startGeneralWorkers()
         } else {
-            addEvent("Stop all workers!")
+            sendEvent("StarterWorker", "Stop all workers!")
             manager.stopAllWorkers()
         }
 
         if (configuration.removeAllData()) {
-            addEvent("Start  remove all data! :(")
+            sendEvent("StarterWorker", "Start  remove all data! :(")
             when {
-                fileUtils.clearCacheFolder(applicationContext) -> addEvent("Clear cache folder done!")
-                fileUtils.getCacheFolderSize(applicationContext) == 0L -> addEvent("Cache folder is empty!")
-                else -> addEvent("Pizdos! I can't remove data from cache folder! :(")
+                fileUtils.clearCacheFolder(applicationContext) -> sendEvent("StarterWorker", "Clear cache folder done!")
+                fileUtils.getCacheFolderSize(applicationContext) == 0L -> sendEvent("StarterWorker", "Cache folder is empty!")
+                else -> sendEvent("StarterWorker", "Pizdos! I can't remove data from cache folder! :(")
             }
             database.clearDb()
         }
 
-        sendEvent("StarterWorker", getEvents())
+        sendEvents()
         return Result.success()
     }
 }

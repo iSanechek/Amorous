@@ -14,7 +14,7 @@ import kotlin.collections.HashSet
 
 interface TrackingUtils {
     fun sendEvent(tag: String, events: HashSet<String>)
-    fun sendEvent(tag: String, event: Event)
+    fun sendEvent(tag: String, event: String)
     fun sendOnServer()
     fun log(msg: String?)
 }
@@ -52,9 +52,9 @@ class TrackingUtilsImpl(private val remoteDatabase: RemoteDatabase,
         }
     }
 
-    override fun sendEvent(tag: String, event: Event) {
-        log(event.toString())
-        database.saveEvent(event)
+    override fun sendEvent(tag: String, event: String) {
+        log(event)
+        database.saveEvent(Event(id = Event.getUid(), title = tag, date = Event.getTime(), event = event))
     }
 
     override fun sendEvent(tag: String, events: HashSet<String>) {

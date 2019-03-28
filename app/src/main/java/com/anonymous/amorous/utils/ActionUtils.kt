@@ -18,7 +18,6 @@ class ActionUtilsImpl(
         private val tracker: TrackingUtils
 ) : ActionUtils {
 
-    private val events = hashSetOf<String>()
 
     override fun startAction(callback: () -> Unit) {
         auth.startAuth { result ->
@@ -27,20 +26,18 @@ class ActionUtilsImpl(
                     addEvent("Auth done! ${result.user?.uid}")
                     addEvent("Start action!")
                     callback()
-                    Log.d("TEST", "Auth done")
-                    tracker.sendEvent("ActionUtils", events)
+                    tracker.sendOnServer()
                 }
                 is AuthCallBack.AuthError -> {
                     addEvent("Auth fail!")
-                    Log.d("TEST", "Auth fail")
                     addEvent("Auth error: ${result.errorMessage}")
-                    tracker.sendEvent("ActionUtils", events)
+                    tracker.sendOnServer()
                 }
             }
         }
     }
 
     private fun addEvent(msg: String) {
-        events.add(msg)
+        tracker.sendEvent("ActionUtils", msg)
     }
 }

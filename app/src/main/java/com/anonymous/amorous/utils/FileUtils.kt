@@ -13,6 +13,7 @@ interface FileUtils {
     fun parseFileNameFromPath(filePath: String): String
     fun getReadableFileSize(size: Long): String
     fun getFileSizeFromPath(pathFile: String): String
+    fun getLongSizeFromPath(pathFile: String): Long
     fun removeFile(path: String): Boolean
     fun getAllFilesFromCacheFolder(context: Context): Array<File>
     fun checkCacheFolderIsEmpty(context: Context): Boolean
@@ -23,6 +24,8 @@ interface FileUtils {
 }
 
 class FileUtilsImpl(private val tracker: TrackingUtils) : FileUtils {
+
+    override fun getLongSizeFromPath(pathFile: String): Long = File(pathFile).length()
 
     override fun getTotalFreeSpace(context: Context): Long = File(getCacheFolderPath(context)).usableSpace
 
@@ -84,18 +87,17 @@ class FileUtilsImpl(private val tracker: TrackingUtils) : FileUtils {
 
 
     override fun copyToCacheFolder(context: Context, originalPath: String): String {
-        val events = hashSetOf<String>()
         return try {
-            events.add("Copy file! Original path: $originalPath")
+            addEvent("Copy file! Original path: $originalPath")
             val distFile = File(getCacheFolderPath(context), originalPath.substring(originalPath.lastIndexOf("/") + 1))
             File(originalPath).copyTo(target = distFile, overwrite = true)
             val resultPath = distFile.absolutePath
-            events.add("Copy file is done! Copy file path: $resultPath")
-            tracker.sendEvent(TAG, events)
+            addEvent("Copy file is done! Copy file path: $resultPath")
+            tracker.sendOnServer()
             resultPath
         } catch (e: Exception) {
-            events.add("Copy file error! ${e.message}")
-            tracker.sendEvent(TAG, events)
+            addEvent("Copy file error! ${e.message}")
+            tracker.sendOnServer()
             String.empty()
         }
     }
@@ -129,6 +131,10 @@ class FileUtilsImpl(private val tracker: TrackingUtils) : FileUtils {
                     }
                 }.sum()
         else -> 0L
+    }
+
+    private fun addEvent(msg: String) {
+        tracker.sendEvent(TAG, msg)
     }
 
     companion object {
