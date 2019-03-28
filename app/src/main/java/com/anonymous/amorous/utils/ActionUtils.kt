@@ -1,14 +1,5 @@
 package com.anonymous.amorous.utils
 
-import android.content.Context
-import android.util.Log
-import com.anonymous.amorous.data.database.LocalDatabase
-import com.anonymous.amorous.debug.logDebug
-import com.anonymous.amorous.service.JobSchContract
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-
 interface ActionUtils {
     fun startAction(callback: () -> Unit)
 }
@@ -18,8 +9,24 @@ class ActionUtilsImpl(
         private val tracker: TrackingUtils
 ) : ActionUtils {
 
-
     override fun startAction(callback: () -> Unit) {
+        auth.checkAuthState { status ->
+            when (status) {
+                is AuthCallBack.AuthOk -> {
+                    addEvent("Auth done! ${status.user?.uid}")
+                    addEvent("Start action!")
+                    callback()
+                    tracker.sendOnServer()
+                }
+                is AuthCallBack.NeedAuth -> {
+                    addEvent("Auth fail! Need auth!")
+                    startAuth(callback)
+                }
+            }
+        }
+    }
+
+    private fun startAuth(callback: () -> Unit) {
         auth.startAuth { result ->
             when (result) {
                 is AuthCallBack.AuthOk -> {
@@ -36,7 +43,6 @@ class ActionUtilsImpl(
             }
         }
     }
-
     private fun addEvent(msg: String) {
         tracker.sendEvent("ActionUtils", msg)
     }

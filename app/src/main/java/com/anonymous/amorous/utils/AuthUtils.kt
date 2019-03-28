@@ -36,7 +36,6 @@ class AuthUtilsImpl(
         auth.signInWithEmailAndPassword(userData.first, userData.second)
                 .addOnCompleteListener {
                     if (it.isSuccessful) {
-                        Log.d("TEST", "Auth comp")
                         val user = auth.currentUser
                         if (user != null) {
                             db.getDatabase()
