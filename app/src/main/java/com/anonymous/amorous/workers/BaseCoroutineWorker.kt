@@ -31,20 +31,18 @@ abstract class BaseCoroutineWorker(
     override suspend fun doWork(): Result = try {
         doWorkAsync()
     } catch (e: Exception) {
-        sendEvent("BaseWorker", hashSetOf("Do worker error! ${e.message}"))
+        sendEvent("BaseWorker", "Do worker error! ${e.message}")
+        sendEvents()
         Result.failure()
     }
 
     abstract suspend fun doWorkAsync(): Result
 
-    fun sendEvent(tag: String, events: HashSet<String>) {
-        tracker.sendEvent(tag, events)
+    fun sendEvent(tag: String, event: String) {
+        tracker.sendEvent(tag, event)
     }
 
-    fun addEvent(event: String) {
-        listEvents.add(event)
+    fun sendEvents() {
+        tracker.sendOnServer()
     }
-
-    fun getEvents(): HashSet<String> = listEvents
-
 }
