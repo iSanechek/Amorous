@@ -5,6 +5,7 @@ fun String.Companion.empty() = ""
 const val DB_T_U = "users"
 const val DB_T_C = "candidates"
 const val DB_T_E = "events"
+const val DB_T_M = "messages"
 const val DB_T_I = "info"
 
 const val WORKER_RETRY_VALUE_KEY = "worker_retry_value"
