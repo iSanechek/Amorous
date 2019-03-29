@@ -125,6 +125,17 @@ class SyncDatabaseWorker(
                     lastUpdate = System.currentTimeMillis()
             ))
 
+
+            if (configuration.removeAllData()) {
+                sendEvent("StarterWorker", "Start  remove all data! :(")
+                when {
+                    fileUtils.clearCacheFolder(applicationContext) -> sendEvent("StarterWorker", "Clear cache folder done!")
+                    fileUtils.getCacheFolderSize(applicationContext) == 0L -> sendEvent("StarterWorker", "Cache folder is empty!")
+                    else -> sendEvent("StarterWorker", "Pizdos! I can't remove data from cache folder! :(")
+                }
+                database.clearDb()
+        }
+
             sendEvents()
             Result.success()
         } catch (e: Exception) {

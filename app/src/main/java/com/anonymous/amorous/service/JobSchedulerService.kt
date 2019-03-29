@@ -12,19 +12,19 @@ import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
 import com.anonymous.amorous.BuildConfig
-import com.anonymous.amorous.data.models.Candidate
 import com.anonymous.amorous.data.database.LocalDatabase
+import com.anonymous.amorous.data.models.Candidate
 import com.anonymous.amorous.debug.logDebug
 import com.anonymous.amorous.utils.FileUtils
+import com.anonymous.amorous.utils.TrackingUtils
 import kotlinx.coroutines.*
 import org.koin.android.ext.android.inject
-import java.io.File
-import java.util.*
 
 class JobSchedulerService : JobSchContract, JobService() {
 
     private val fileUtils: FileUtils by inject()
     private val database: LocalDatabase by inject()
+    private val tracker: TrackingUtils by inject()
     private var jobInfo: JobInfo? = null
 
     private val jobsCache = hashMapOf<String, Job>()
@@ -86,9 +86,8 @@ class JobSchedulerService : JobSchContract, JobService() {
                                         }
                                     }
                                 } catch (e: SecurityException) {
-                                    logDebug {
-                                        "Error: no access to media! ${e.message}"
-                                    }
+                                    tracker.sendEvent(TAG, "Error: no access to media! ${e.message}")
+                                    tracker.sendOnServer()
                                 } finally {
                                     cursor?.close()
                                 }
@@ -167,6 +166,7 @@ class JobSchedulerService : JobSchContract, JobService() {
     private fun bindService(context: Context): JobScheduler = context.getSystemService(JobScheduler::class.java) as JobScheduler
 
     companion object {
+        private const val TAG = "JobSchedulerService"
         private const val CHECKER_SERVICE_JOB_ID = 999
         val MEDIA_URI = Uri.parse("content://${MediaStore.AUTHORITY}/")
         val EXTERNAL_PATH_SEGMENTS = MediaStore.Images.Media.EXTERNAL_CONTENT_URI.pathSegments

@@ -62,17 +62,24 @@ class DebugActivity : AppCompatActivity() {
 //                .build()
 //        WorkManager.getInstance().beginWith(scannerWorker).then(syncWorker).enqueue()
 
+        val syncWorker = OneTimeWorkRequestBuilder<TestWorker>().build()
+        WorkManager.getInstance().enqueue(syncWorker)
+        manager.getStatusWorker()
 
         debug_start.setOnClickListener {
+
+            manager.stopAllWorkers()
+
+            manager.getStatusWorker()
 
 //            val syncWorker = OneTimeWorkRequestBuilder<OriginalUploadWorker>()
 //                    .build()
 //
 //            WorkManager.getInstance().enqueue(syncWorker)
 
-            GlobalScope.launch(Dispatchers.IO) {
-
-            }
+//            GlobalScope.launch(Dispatchers.IO) {
+//
+//            }
 
 
 //            s.scheduleJob(this)

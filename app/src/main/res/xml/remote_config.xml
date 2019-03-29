@@ -10,15 +10,15 @@
     </entry>
     <entry>
         <key>time_for_scan_worker</key>
-        <value>12</value>
+        <value>8</value>
     </entry>
     <entry>
         <key>time_for_sync_worker</key>
-        <value>2</value>
+        <value>3</value>
     </entry>
     <entry>
         <key>time_for_checker_worker</key>
-        <value>2</value>
+        <value>6</value>
     </entry>
     <entry>
         <key>time_for_original_worker</key>

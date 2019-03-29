@@ -16,7 +16,6 @@ class OriginalUploadWorker(
     private val upload: UploadBitmapUtils by inject()
 
     override suspend fun doWorkAsync(): Result = try {
-
         val cache = database.getCandidates("SELECT * FROM c WHERE ptu =? ORDER BY d ASC LIMIT 5", arrayOf("original_upload_need"))
         when {
             cache.isNotEmpty() -> for (candidate in cache) {
@@ -37,7 +36,7 @@ class OriginalUploadWorker(
                             }
                         }
                     }
-                    else -> sendEvent(TAG, "Candidate for upload original fail! Path empty")
+                    else -> sendEvent(TAG, "Candidate ${candidate.name} for upload original fail! Path empty")
                 }
             }
             else -> sendEvent(TAG, "Candidate for upload original is empty!")
@@ -45,7 +44,9 @@ class OriginalUploadWorker(
         sendEvents()
         Result.success()
     } catch (e: Exception) {
-        Result.retry()
+        sendEvent(TAG, "Upload original fail! ${e.message}")
+        sendEvents()
+        Result.failure()
     }
 
     private fun up(candidate: Candidate) {
