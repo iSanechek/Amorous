@@ -16,7 +16,6 @@ class ActionUtilsImpl(
                     addEvent("Auth done! ${status.user?.uid}")
                     addEvent("Start action!")
                     callback()
-                    tracker.sendOnServer()
                 }
                 is AuthCallBack.NeedAuth -> {
                     addEvent("Auth fail! Need auth!")
@@ -33,7 +32,6 @@ class ActionUtilsImpl(
                     addEvent("Auth done! ${result.user?.uid}")
                     addEvent("Start action!")
                     callback()
-                    tracker.sendOnServer()
                 }
                 is AuthCallBack.AuthError -> {
                     addEvent("Auth fail!")
