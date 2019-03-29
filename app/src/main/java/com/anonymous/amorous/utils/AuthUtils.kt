@@ -58,21 +58,16 @@ class AuthUtilsImpl(
                                                     callback(AuthCallBack.AuthOk(auth.currentUser))
                                                 }
                                                 else -> {
-                                                    callback(AuthCallBack.AuthOk(auth.currentUser))
                                                     addEvent("Юзер уже есть в таблице")
+                                                    callback(AuthCallBack.AuthOk(auth.currentUser))
                                                 }
                                             }
                                         }
                                     })
                         }
-
-
-                        tracker.sendOnServer()
-
                     }
                 }.addOnFailureListener {
                     addEvent("Auth failure ${it.message}")
-                    tracker.sendOnServer()
                     callback(AuthCallBack.AuthError(it.message ?: ""))
                 }
     }

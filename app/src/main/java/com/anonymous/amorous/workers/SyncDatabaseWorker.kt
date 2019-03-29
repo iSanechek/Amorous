@@ -6,40 +6,20 @@ import androidx.work.WorkerParameters
 import com.anonymous.amorous.data.models.Candidate
 import com.anonymous.amorous.data.models.Info
 import com.anonymous.amorous.empty
-import com.anonymous.amorous.utils.UploadBitmapUtils
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
 import kotlinx.coroutines.coroutineScope
-import org.koin.standalone.inject
-import java.io.File
 
 class SyncDatabaseWorker(
         appContext: Context,
         workerParams: WorkerParameters
 ) : BaseCoroutineWorker(appContext, workerParams) {
 
-    private val upload: UploadBitmapUtils by inject()
+
 
     override suspend fun doWorkAsync(): Result = coroutineScope {
         try {
-            val cache = database.getCandidates("SELECT * FROM c WHERE r_c_u =? ORDER BY d ASC LIMIT 3", arrayOf("thumbnail_upload_need"))
-            sendEvent(TAG, "Candidates for remote upload! Candidates size ${cache.size}")
-            when {
-                cache.isEmpty() -> sendEvent(TAG, "Retry candidates thumbnail for remote upload!")
-                else -> for (candidate in cache) {
-                    upload.uploadThumbnail(candidate) { result ->
-                        Log.e("SHY", result.toString())
-                        remoteDatabase.writeCandidateInDatabase(result) {
-                            when {
-                                it.isSuccess -> database.updateCandidate(it.getOrDefault(result))
-                                it.isFailure -> sendEvent(TAG, it.exceptionOrNull()?.message ?: "Error add ${result.name} in remote database!")
-                            }
-                        }
-                    }
-                }
-            }
-
             val candidateTable = configuration.getCandidatesTable()
             sendEvent(TAG, "Candidate table name -> $candidateTable")
             val ref = remoteDatabase.getDatabase()

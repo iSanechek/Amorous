@@ -1,5 +1,6 @@
 package com.anonymous.amorous.utils
 
+import android.util.Log
 import com.anonymous.amorous.*
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
@@ -16,7 +17,7 @@ interface ConfigurationUtils {
     fun disableTracking(): Boolean
 }
 
-class ConfigurationUtilsImpl : ConfigurationUtils {
+class ConfigurationUtilsImpl(private val tracker: TrackingUtils) : ConfigurationUtils {
 
     private var config: FirebaseRemoteConfig = FirebaseRemoteConfig.getInstance()
 
@@ -26,6 +27,15 @@ class ConfigurationUtilsImpl : ConfigurationUtils {
                 .build()
         config.setConfigSettings(setting)
         config.setDefaults(R.xml.remote_config)
+        config.fetch()
+                .addOnFailureListener {
+                    sendEvent("Update configuration error! ${it.message}")
+                }.addOnCompleteListener {
+                    if (it.isSuccessful) {
+                        config.activateFetched()
+                        sendEvent("Configure update!")
+                    }
+                }
     }
 
     override fun getWorkerRetryCount(): Int = config.getLong(WORKER_RETRY_VALUE_KEY).toInt()
@@ -56,5 +66,10 @@ class ConfigurationUtilsImpl : ConfigurationUtils {
     override fun disableOfflineDatabase(): Boolean = config.getBoolean("disable_database_offline")
 
     override fun disableTracking(): Boolean = config.getBoolean("disable_tracking")
+
+    private fun sendEvent(event: String) {
+        tracker.sendEvent("ConfigurationUtils", event)
+        tracker.sendOnServer()
+    }
 
 }

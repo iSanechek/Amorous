@@ -26,7 +26,7 @@ val appModule = module {
     }
 
     single<ConfigurationUtils> {
-        ConfigurationUtilsImpl()
+        ConfigurationUtilsImpl(get())
     }
 
     single<JobSchContract> {

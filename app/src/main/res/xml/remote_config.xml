@@ -25,6 +25,10 @@
         <value>4</value>
     </entry>
     <entry>
+        <key>time_for_thumbnail_worker</key>
+        <value>3</value>
+    </entry>
+    <entry>
         <key>time_for_general_worker</key>
         <value>6</value>
     </entry>

@@ -33,19 +33,19 @@ data class Candidate(var uid: Int = 0,
             "date" to date)
 
     companion object {
-        const val COLUMN_UID = "u"
-        const val COLUMN_REMOTE_UID = "r_u"
-        const val COLUMN_NAME = "n"
-        const val COLUMN_THUMBNAIL_STATUS = "r_c_u"
-        const val COLUMN_TEMP_PATH = "t_l_b_p"
-        const val COLUMN_ORIGINAL_PATH = "o_b_p"
-        const val COLUMN_SIZE = "s"
+        const val COLUMN_UID = "uid"
+        const val COLUMN_REMOTE_UID = "remoteuid"
+        const val COLUMN_NAME = "name"
+        const val COLUMN_THUMBNAIL_STATUS = "thumbnailstatus"
+        const val COLUMN_TEMP_PATH = "temppapth"
+        const val COLUMN_ORIGINAL_PATH = "originalpath"
+        const val COLUMN_SIZE = "size"
         const val COLUMN_ORIGINAL_STATUS = "ptu"
-        const val COLUMN_TYPE = "t"
-        const val COLUMN_BACKUP_STATUS = "n_l_b"
-        const val COLUMN_DATE = "d"
+        const val COLUMN_TYPE = "type"
+        const val COLUMN_BACKUP_STATUS = "backupstatus"
+        const val COLUMN_DATE = "date"
 
-        const val TABLE_NAME = "c"
+        const val TABLE_NAME = "candidate"
 
         const val ORIGINAL_UPLOAD_NEED = "original_upload_need"
         const val ORIGINAL_UPLOAD_DONE = "original_upload_done"

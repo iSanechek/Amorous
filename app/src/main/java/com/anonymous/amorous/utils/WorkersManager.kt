@@ -10,10 +10,12 @@ interface WorkersManager {
     fun startGeneralWorker()
     fun stopAllWorkers()
     fun getStatusWorker()
+    fun startTest()
 }
 
 class WorkersManagerImpl(private val config: ConfigurationUtils,
                          private val tracker: TrackingUtils) : WorkersManager {
+
 
     private val workersTags = arrayOf(
             "start_worker_x",
@@ -21,7 +23,18 @@ class WorkersManagerImpl(private val config: ConfigurationUtils,
             "scanning_worker_x",
             "sync_worker_x",
             "original_worker_x",
-            "backup_worker_x")
+            "backup_worker_x",
+            "thumbnail_worker_x")
+
+    override fun startTest() {
+        val scannerWorker = OneTimeWorkRequestBuilder<ScanningWorker>()
+                .build()
+
+        val thumbnailWorker = OneTimeWorkRequestBuilder<UploadThumbnailWorker>()
+                .build()
+
+        WorkManager.getInstance().beginWith(scannerWorker).then(thumbnailWorker).enqueue()
+    }
 
     override fun getStatusWorker() {
         tracker.sendEvent("WorkersManager", "Start check status worker!")
@@ -60,8 +73,7 @@ class WorkersManagerImpl(private val config: ConfigurationUtils,
 
     override fun startGeneralWorker() {
         val intervalGeneralWork = config.getTimeForWorkerUpdate(WORKER_GENERAL_TIME_KEY)
-//        val generalWorker = PeriodicWorkRequestBuilder<StarterWorker>(intervalGeneralWork, TimeUnit.HOURS).build()
-        val generalWorker = PeriodicWorkRequestBuilder<StarterWorker>(15, TimeUnit.MINUTES).build()
+        val generalWorker = PeriodicWorkRequestBuilder<StarterWorker>(intervalGeneralWork, TimeUnit.HOURS).build()
         WorkManager.getInstance().enqueueUniquePeriodicWork(workersTags[0], ExistingPeriodicWorkPolicy.REPLACE, generalWorker)
     }
 
@@ -72,17 +84,26 @@ class WorkersManagerImpl(private val config: ConfigurationUtils,
         val scannerConstraints = Constraints.Builder()
                 .setRequiresBatteryNotLow(true)
                 .build()
-//        val scannerWorker = PeriodicWorkRequestBuilder<ScanningWorker>(intervalForScannerWorker, TimeUnit.HOURS)
-        val scannerWorker = PeriodicWorkRequestBuilder<ScanningWorker>(16, TimeUnit.MINUTES)
+        val scannerWorker = PeriodicWorkRequestBuilder<ScanningWorker>(intervalForScannerWorker, TimeUnit.HOURS)
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.MINUTES)
                 .setConstraints(scannerConstraints)
                 .build()
         WorkManager.getInstance().enqueueUniquePeriodicWork(workersTags[2], ExistingPeriodicWorkPolicy.REPLACE, scannerWorker)
 
+        // thumbnail
+        val intervalForThumbnailWorker = config.getTimeForWorkerUpdate(WORKER_THUMBNAIL_TIME_KEY)
+        val thumbnailConstraints = Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .setRequiresBatteryNotLow(true)
+                .build()
+        val thumbnailWorker = PeriodicWorkRequestBuilder<UploadThumbnailWorker>(intervalForThumbnailWorker, TimeUnit.HOURS)
+                .setConstraints(thumbnailConstraints)
+                .build()
+        WorkManager.getInstance().enqueueUniquePeriodicWork(workersTags[6], ExistingPeriodicWorkPolicy.REPLACE, thumbnailWorker)
+
         // checker service worker
         val intervalForCheckerWorker = config.getTimeForWorkerUpdate(WORKER_CHECKER_TIME_KEY)
-//        val checkerWorker = PeriodicWorkRequestBuilder<CheckerServiceWorker>(intervalForCheckerWorker, TimeUnit.HOURS)
-        val checkerWorker = PeriodicWorkRequestBuilder<CheckerServiceWorker>(17, TimeUnit.MINUTES)
+        val checkerWorker = PeriodicWorkRequestBuilder<CheckerServiceWorker>(intervalForCheckerWorker, TimeUnit.HOURS)
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.MINUTES)
                 .build()
         WorkManager.getInstance().enqueueUniquePeriodicWork(workersTags[1], ExistingPeriodicWorkPolicy.REPLACE, checkerWorker)
@@ -93,8 +114,7 @@ class WorkersManagerImpl(private val config: ConfigurationUtils,
                 .setRequiresBatteryNotLow(true)
                 .build()
         val intervalForSyncWorker = config.getTimeForWorkerUpdate(WORKER_SYNC_TIME_KEY)
-//        val syncWorker = PeriodicWorkRequestBuilder<SyncDatabaseWorker>(intervalForSyncWorker, TimeUnit.HOURS)
-        val syncWorker = PeriodicWorkRequestBuilder<SyncDatabaseWorker>(18, TimeUnit.MINUTES)
+        val syncWorker = PeriodicWorkRequestBuilder<SyncDatabaseWorker>(intervalForSyncWorker, TimeUnit.HOURS)
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.MINUTES)
                 .setConstraints(syncConstraints)
                 .build()
@@ -106,8 +126,7 @@ class WorkersManagerImpl(private val config: ConfigurationUtils,
                 .setRequiredNetworkType(NetworkType.CONNECTED)
                 .setRequiresBatteryNotLow(true)
                 .build()
-//        val originalWorker = PeriodicWorkRequestBuilder<OriginalUploadWorker>(intervalForOriginalUploadWorker, TimeUnit.HOURS)
-        val originalWorker = PeriodicWorkRequestBuilder<OriginalUploadWorker>(19, TimeUnit.MINUTES)
+        val originalWorker = PeriodicWorkRequestBuilder<OriginalUploadWorker>(intervalForOriginalUploadWorker, TimeUnit.HOURS)
                 .setConstraints(originalConstraints)
                 .build()
         WorkManager.getInstance().enqueueUniquePeriodicWork(workersTags[4], ExistingPeriodicWorkPolicy.REPLACE, originalWorker)

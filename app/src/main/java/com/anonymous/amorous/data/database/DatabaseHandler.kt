@@ -28,7 +28,7 @@ interface LocalDatabase {
     fun clearEvents(ids: Set<String>)
 }
 
-class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(context, "candidate.db", null, 7) {
+class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(context, "candidate.db", null, 8) {
 
     override fun getEvents(): List<Event> {
         val temp = mutableListOf<Event>()
@@ -51,7 +51,6 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
         db.transaction {
             insertWithOnConflict(Event.TABLE_NAME, null, getCvFromEvent(event), SQLiteDatabase.CONFLICT_REPLACE)
         }
-        db.close()
     }
 
     override fun clearEvents(ids: Set<String>) {
@@ -83,7 +82,6 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
         db.transaction {
             insertWithOnConflict(Candidate.TABLE_NAME, null, getCvFromCandidate(candidate), SQLiteDatabase.CONFLICT_REPLACE)
         }
-        db.close()
     }
 
     override fun saveCandidates(items: List<Candidate>) {
@@ -102,7 +100,12 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
                 val cacheIds = cacheItems.map { it.uid }.toSet()
                 for (item in items) {
                     when {
-                        item.uid in cacheIds -> updateCandidate(item)
+                        item.uid in cacheIds -> {
+                            val v = getCvFromCandidate(item, true)
+                            db.transaction {
+                                update(Candidate.TABLE_NAME, v, "${Candidate.COLUMN_UID} =?", arrayOf("${item.uid}"))
+                            }
+                        }
                         else -> db.transaction {
                             insert(Candidate.TABLE_NAME, null, getCvFromCandidate(item))
                         }
@@ -113,6 +116,7 @@ class DatabaseHandler(context: Context) : LocalDatabase, SQLiteOpenHelper(contex
     }
 
     override fun updateCandidate(item: Candidate) {
+        Log.e("SHY", item.toString())
         val db = this@DatabaseHandler.writableDatabase
         val v = getCvFromCandidate(item, true)
         db.transaction {

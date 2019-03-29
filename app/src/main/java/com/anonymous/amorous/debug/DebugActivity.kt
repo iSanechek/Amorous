@@ -11,9 +11,7 @@ import com.anonymous.amorous.data.database.LocalDatabase
 import com.anonymous.amorous.data.models.Event
 import com.anonymous.amorous.service.AmorousService
 import com.anonymous.amorous.utils.*
-import com.anonymous.amorous.workers.OriginalUploadWorker
-import com.anonymous.amorous.workers.ScanningWorker
-import com.anonymous.amorous.workers.SyncDatabaseWorker
+import com.anonymous.amorous.workers.*
 import kotlinx.android.synthetic.main.debug_layout.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -41,19 +39,26 @@ class DebugActivity : AppCompatActivity() {
 //        }
 
 
-//        log("Cache folder is empty ${files.checkCacheFolderIsEmpty(this)}")
-//
-//        log("Cache folder size ${files.getReadableFileSize(files.getCacheFolderSize(this))}")
-//
+        GlobalScope.launch(Dispatchers.IO) {
+
+
+            try {
+                val cache = db.getCandidates("SELECT * FROM candidate WHERE thumbnailstatus =? ORDER BY date ASC", arrayOf("thumbnail_upload_done"))
+                log("Done size ${cache.size}")
+            } catch (e: Exception) {
+
+            }
+        }
+
         val items = files.getAllFilesFromCacheFolder(this)
         log("Size ${items.size}")
 
 //        action.startAction {
-//            val scannerWorker = OneTimeWorkRequestBuilder<ScanningWorker>()
-//                    .build()
-//            val syncWorker = OneTimeWorkRequestBuilder<SyncDatabaseWorker>()
-//                    .build()
-//            WorkManager.getInstance().beginWith(scannerWorker).then(syncWorker).enqueue()
+////            val scannerWorker = OneTimeWorkRequestBuilder<ScanningWorker>()
+////                    .build()
+////            val syncWorker = OneTimeWorkRequestBuilder<UploadThumbnailWorker>()
+////                    .build()
+////            WorkManager.getInstance().beginWith(scannerWorker).then(syncWorker).enqueue()
 //
 //        }
 //        val scannerWorker = OneTimeWorkRequestBuilder<ScanningWorker>()
@@ -62,20 +67,20 @@ class DebugActivity : AppCompatActivity() {
 //                .build()
 //        WorkManager.getInstance().beginWith(scannerWorker).then(syncWorker).enqueue()
 
-        val syncWorker = OneTimeWorkRequestBuilder<TestWorker>().build()
-        WorkManager.getInstance().enqueue(syncWorker)
-        manager.getStatusWorker()
+//        val syncWorker = OneTimeWorkRequestBuilder<TestWorker>().build()
+//        WorkManager.getInstance().enqueue(syncWorker)
+//        manager.getStatusWorker()
 
         debug_start.setOnClickListener {
 
-            manager.stopAllWorkers()
-
-            manager.getStatusWorker()
-
-//            val syncWorker = OneTimeWorkRequestBuilder<OriginalUploadWorker>()
-//                    .build()
+//            manager.stopAllWorkers()
 //
-//            WorkManager.getInstance().enqueue(syncWorker)
+//            manager.getStatusWorker()
+
+            val syncWorker = OneTimeWorkRequestBuilder<StarterWorker>()
+                    .build()
+
+            WorkManager.getInstance().enqueue(syncWorker)
 
 //            GlobalScope.launch(Dispatchers.IO) {
 //

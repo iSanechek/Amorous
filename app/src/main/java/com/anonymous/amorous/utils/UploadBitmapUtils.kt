@@ -37,16 +37,13 @@ class UploadBitmapUtilsImpl(
             val uploadTask = sr.putBytes(data)
             uploadTask.addOnSuccessListener {
                 addEvent("Upload thumbnail for ${candidate.name} is done!")
-                tracker.sendOnServer()
                 callback(candidate.copy(thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_DONE))
             }.addOnFailureListener {
                 addEvent("Upload thumbnail for ${candidate.name} is fail!")
-                tracker.sendOnServer()
                 callback(candidate.copy(thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_FAIL))
             }
         } else {
             addEvent("Upload thumbnail for ${candidate.name} is fail! Path is null!")
-            tracker.sendOnServer()
             callback(candidate.copy(thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_FAIL))
         }
     }
