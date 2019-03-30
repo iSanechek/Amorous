@@ -15,7 +15,7 @@ class UploadThumbnailWorker(
     private val upload: UploadBitmapUtils by inject()
 
     override suspend fun doWorkAsync(): Result = try {
-        val cache = database.getCandidates("SELECT * FROM candidate WHERE thumbnailstatus =? ORDER BY date ASC LIMIT 3", arrayOf("thumbnail_upload_need"))
+        val cache = database.getCandidates("SELECT * FROM candidate WHERE thumbnailstatus =? ORDER BY date ASC LIMIT 5", arrayOf("thumbnail_upload_need"))
         sendEvent(TAG, "Candidates for remote upload! Candidates size ${cache.size}")
         when {
             cache.isEmpty() -> sendEvent(TAG, "Retry candidates thumbnail for remote upload!")

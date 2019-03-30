@@ -19,7 +19,7 @@ class AmorousService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int =
-            START_REDELIVER_INTENT
+            START_NOT_STICKY
 
     override fun onDestroy() {
         sendEvent("Service is destroy!")

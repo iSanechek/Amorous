@@ -16,7 +16,7 @@ class OriginalUploadWorker(
     private val upload: UploadBitmapUtils by inject()
 
     override suspend fun doWorkAsync(): Result = try {
-        val cache = database.getCandidates("SELECT * FROM c WHERE ptu =? ORDER BY d ASC LIMIT 5", arrayOf("original_upload_need"))
+        val cache = database.getCandidates("SELECT * FROM candidate WHERE ptu =? ORDER BY date ASC LIMIT 5", arrayOf("original_upload_need"))
         when {
             cache.isNotEmpty() -> for (candidate in cache) {
                 val path = when {
