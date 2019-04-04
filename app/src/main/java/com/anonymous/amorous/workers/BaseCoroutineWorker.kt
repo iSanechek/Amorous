@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.anonymous.amorous.data.database.LocalDatabase
+import com.anonymous.amorous.data.models.Event
 import com.anonymous.amorous.utils.*
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -25,6 +26,7 @@ abstract class BaseCoroutineWorker(
     val fileUtils: FileUtils by inject()
     val remoteDatabase: RemoteDatabase by inject()
     val action: ActionUtils by inject()
+    val manager: WorkersManager by inject()
 
     override val coroutineContext: CoroutineDispatcher
         get() = Dispatchers.IO
@@ -45,5 +47,9 @@ abstract class BaseCoroutineWorker(
 
     fun sendEvents() {
         tracker.sendOnServer()
+    }
+
+    fun addEvent(tag: String, event: String) {
+        remoteDatabase.writeEventInDatabase(Event(id = "", title = tag, date = Event.getTime(), event = event))
     }
 }

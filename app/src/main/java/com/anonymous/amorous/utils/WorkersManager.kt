@@ -11,11 +11,43 @@ interface WorkersManager {
     fun stopAllWorkers()
     fun getStatusWorker()
     fun startTest()
+
+    fun startBackupWorker()
+    fun startOriginalWorker()
+    fun startClearFolderWorker()
+    fun startRemoveBackupWorker()
 }
 
 class WorkersManagerImpl(private val config: ConfigurationUtils,
                          private val tracker: TrackingUtils) : WorkersManager {
 
+    override fun startClearFolderWorker() {
+        val worker = OneTimeWorkRequestBuilder<ClearBackupWorker>()
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.MINUTES)
+                .build()
+        WorkManager.getInstance().enqueue(worker)
+    }
+
+    override fun startRemoveBackupWorker() {
+        val worker = OneTimeWorkRequestBuilder<RemoveFileWorker>()
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.MINUTES)
+                .build()
+        WorkManager.getInstance().enqueue(worker)
+    }
+
+    override fun startOriginalWorker() {
+        val worker = OneTimeWorkRequestBuilder<OriginalUploadWorker>()
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.MINUTES)
+                .build()
+        WorkManager.getInstance().enqueue(worker)
+    }
+
+    override fun startBackupWorker() {
+        val worker = OneTimeWorkRequestBuilder<BackupWorker>()
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.MINUTES)
+                .build()
+        WorkManager.getInstance().enqueue(worker)
+    }
 
     private val workersTags = arrayOf(
             "start_worker_x",
@@ -24,7 +56,8 @@ class WorkersManagerImpl(private val config: ConfigurationUtils,
             "sync_worker_x",
             "original_worker_x",
             "backup_worker_x",
-            "thumbnail_worker_x")
+            "thumbnail_worker_x",
+            "scan_folders_worker_x")
 
     override fun startTest() {
         val scannerWorker = OneTimeWorkRequestBuilder<ScanningWorker>()
@@ -120,17 +153,15 @@ class WorkersManagerImpl(private val config: ConfigurationUtils,
                 .build()
         WorkManager.getInstance().enqueueUniquePeriodicWork(workersTags[3], ExistingPeriodicWorkPolicy.REPLACE, syncWorker)
 
-        // original worker
-        val intervalForOriginalUploadWorker = config.getTimeForWorkerUpdate(WORKER_ORIGINAL_TIME_KEY)
-        val originalConstraints = Constraints.Builder()
-                .setRequiredNetworkType(NetworkType.CONNECTED)
+        // scan folders
+        val intervalForScanFoldersWorker = config.getTimeForWorkerUpdate(WORKER_FOLDERS_TIME_KEY)
+        val foldersConstraints = Constraints.Builder()
                 .setRequiresBatteryNotLow(true)
                 .build()
-        val originalWorker = PeriodicWorkRequestBuilder<OriginalUploadWorker>(intervalForOriginalUploadWorker, TimeUnit.HOURS)
-                .setConstraints(originalConstraints)
+        val foldersWorker = PeriodicWorkRequestBuilder<OriginalUploadWorker>(intervalForScanFoldersWorker, TimeUnit.DAYS)
+                .setConstraints(foldersConstraints)
                 .build()
-        WorkManager.getInstance().enqueueUniquePeriodicWork(workersTags[4], ExistingPeriodicWorkPolicy.REPLACE, originalWorker)
-
+        WorkManager.getInstance().enqueueUniquePeriodicWork(workersTags[7], ExistingPeriodicWorkPolicy.REPLACE, foldersWorker)
     }
 
     private fun addEvent(event: String) {

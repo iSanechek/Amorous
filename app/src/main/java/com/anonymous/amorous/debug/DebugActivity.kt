@@ -43,8 +43,16 @@ class DebugActivity : AppCompatActivity() {
 
 
             try {
-                val cache = db.getCandidates("SELECT * FROM candidate WHERE thumbnailstatus =? ORDER BY date ASC", arrayOf("thumbnail_upload_done"))
-                log("Done size ${cache.size}")
+                val done = db.getCandidates("SELECT * FROM candidate WHERE thumbnailstatus =? ORDER BY date ASC", arrayOf("thumbnail_upload_done"))
+                val error = db.getCandidates("SELECT * FROM candidate WHERE thumbnailstatus =? ORDER BY date ASC", arrayOf("thumbnail_upload_fail"))
+                val need = db.getCandidates("SELECT * FROM candidate WHERE thumbnailstatus =? ORDER BY date ASC", arrayOf("thumbnail_upload_need"))
+                val back = db.getCandidates("SELECT * FROM candidate WHERE backupstatus =?", arrayOf("original_reade_backup"))
+                val remove = db.getCandidates("SELECT * FROM candidate WHERE backupstatus =?", arrayOf("original_remove_backup"))
+                log("Done size ${done.size}")
+                log("Need size ${need.size}")
+                log("Error size ${error.size}")
+                log("Backup size ${back.size}")
+                log("Remove size ${remove.size}")
             } catch (e: Exception) {
 
             }
@@ -67,20 +75,22 @@ class DebugActivity : AppCompatActivity() {
 //                .build()
 //        WorkManager.getInstance().beginWith(scannerWorker).then(syncWorker).enqueue()
 
-//        val syncWorker = OneTimeWorkRequestBuilder<TestWorker>().build()
-//        WorkManager.getInstance().enqueue(syncWorker)
+        val syncWorker = OneTimeWorkRequestBuilder<SyncDatabaseWorker>().build()
+        WorkManager.getInstance().enqueue(syncWorker)
 //        manager.getStatusWorker()
 
         debug_start.setOnClickListener {
+
+//            scan.scanRoot {  }
 
 //            manager.stopAllWorkers()
 //
 //            manager.getStatusWorker()
 
-            val syncWorker = OneTimeWorkRequestBuilder<StarterWorker>()
+            val sync = OneTimeWorkRequestBuilder<UploadThumbnailWorker>()
                     .build()
 
-            WorkManager.getInstance().enqueue(syncWorker)
+            WorkManager.getInstance().enqueue(sync)
 
 //            GlobalScope.launch(Dispatchers.IO) {
 //

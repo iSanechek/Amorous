@@ -17,6 +17,7 @@ interface RemoteDatabase {
     fun updateCandidate(candidate: Candidate)
     fun updateCandidate(remoteUid: String?, column: String, value: Any, callback: (String) -> Unit)
     fun writeMessageInDatabase(message: Message, callback: () -> Unit)
+    fun writeFolderInDatabase(folder: Folder, callback: (Result<Folder>) -> Unit)
 }
 
 class DatabaseUtilsImpl : RemoteDatabase {
@@ -32,6 +33,17 @@ class DatabaseUtilsImpl : RemoteDatabase {
     }
 
     override fun getDatabase(): DatabaseReference = db
+
+    override fun writeFolderInDatabase(folder: Folder, callback: (Result<Folder>) -> Unit) {
+        val key = db.child(DB_T_F).push().key
+        key ?: return
+        val copyFolder = folder.copy(remoteKey = key)
+        val childUpdates = HashMap<String, Any>()
+        childUpdates["/$DB_T_F/$key"] = copyFolder.toMap()
+        db.updateChildren(childUpdates)
+                .addOnCompleteListener { callback(Result.success(copyFolder)) }
+                .addOnFailureListener { callback(Result.failure(it)) }
+    }
 
     override fun writeCandidateInDatabase(candidate: Candidate, callback: (Result<Candidate>) -> Unit) {
         val key = db.child(DB_T_C).push().key
@@ -51,9 +63,10 @@ class DatabaseUtilsImpl : RemoteDatabase {
     override fun writeEventInDatabase(event: Event) {
         val key = db.child(DB_T_E).push().key
         key ?: return
-        val eventValue = event.toMap()
+        val eventValue = event.copy(id = key).toMap()
         val eventUpdates = HashMap<String, Any>()
-        eventUpdates["/$DB_T_E/$key"] = eventValue
+        val date = dateFormat.format(Date())
+        eventUpdates["/$DB_T_E/$date/$key"] = eventValue
         db.updateChildren(eventUpdates)
     }
 

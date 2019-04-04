@@ -32,21 +32,17 @@ class CheckerServiceWorker(
                     val value = retryCount.inc()
                     pref.updateWorkerRetryCountValue(TAG, value)
                     track.sendEvent(TAG, "Jobs service start! Retry count $retryCount")
-                    track.sendOnServer()
                     Result.retry()
                 } else {
                     track.sendEvent(TAG, "Jobs service retry start fail! Retry count $retryCount")
-                    track.sendOnServer()
                     Result.failure()
                 }
             } else {
                 track.sendEvent(TAG, "Jobs service is working!")
-                track.sendOnServer()
                 Result.success()
             }
         } else {
             track.sendEvent(TAG, "Jobs service is running!")
-            track.sendOnServer()
             Result.success()
         }
     }

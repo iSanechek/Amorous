@@ -11,8 +11,6 @@ class StarterWorker(
         parameters: WorkerParameters
 ) : BaseCoroutineWorker(context, parameters) {
 
-    private val manager: WorkersManager by inject()
-
     override suspend fun doWorkAsync(): Result {
         var isGood = false
         val retryCount = pref.getWorkerRetryCountValue("StarterWorker")

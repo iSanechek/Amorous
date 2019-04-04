@@ -10,6 +10,7 @@ class ScanningWorker(
 ) : BaseCoroutineWorker(appContext, workerParams) {
 
     override suspend  fun doWorkAsync(): Result {
+
         val result = scanner.startScan()
         return when (result) {
             is ScanCallback.ResultOk -> {
@@ -25,11 +26,11 @@ class ScanningWorker(
                         val value = retryCount.inc()
                         pref.updateWorkerRetryCountValue(TAG, value)
                         sendEvent(TAG, "Scanning is done with empty result! Retry scan! Retry count $value")
-                        sendEvents()
+
                         Result.retry()
                     } else {
                         sendEvent(TAG, "Scanning is done with empty result! Retry count is out! Count $retryCount")
-                        sendEvents()
+                        pref.updateWorkerRetryCountValue(TAG, 0)
                         Result.failure()
                     }
                 }
@@ -47,8 +48,10 @@ class ScanningWorker(
                         sendEvents()
                         Result.failure()
                     }
+                    else -> Result.retry()
                 }
             }
+            else -> Result.retry()
         }
     }
 

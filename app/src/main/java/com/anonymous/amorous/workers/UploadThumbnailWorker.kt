@@ -20,10 +20,12 @@ class UploadThumbnailWorker(
         when {
             cache.isEmpty() -> sendEvent(TAG, "Retry candidates thumbnail for remote upload!")
             else -> for (candidate in cache) {
+
                 upload.uploadThumbnail(candidate) { result ->
                     remoteDatabase.writeCandidateInDatabase(result) {
                         when {
                             it.isSuccess -> {
+                                Log.e("TAG", "Upload done")
                                 database.updateCandidate(it.getOrDefault(result))
                             }
                             it.isFailure -> sendEvent(TAG, it.exceptionOrNull()?.message ?: "Error add ${result.name} in remote database!")
@@ -32,11 +34,9 @@ class UploadThumbnailWorker(
                 }
             }
         }
-        sendEvents()
         Result.success()
     } catch (e: Exception) {
         sendEvent("", "Error upload thumbnail! ${e.message}")
-        sendEvents()
         Result.failure()
     }
 

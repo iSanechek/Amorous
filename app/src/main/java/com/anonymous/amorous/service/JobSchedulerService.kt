@@ -11,6 +11,7 @@ import android.database.Cursor
 import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
+import android.util.Log
 import com.anonymous.amorous.BuildConfig
 import com.anonymous.amorous.data.database.LocalDatabase
 import com.anonymous.amorous.data.models.Candidate
@@ -68,9 +69,12 @@ class JobSchedulerService : JobSchContract, JobService() {
                                         if (dir.startsWith(DCIM_DIR)) {
 //                                            val fileId = cursor.getInt(PROJECTION_ID)
                                             val fileName = dir.substring(dir.lastIndexOf("/") + 1)
+                                            Log.e(TAG, "name $fileName")
+                                            Log.e(TAG, "dir $dir")
                                             jobsCache[fileName]?.cancel()
                                             jobsCache[fileName] = scope.launch {
                                                 try {
+
                                                     doWorkAsync(
                                                             dir = dir,
                                                             name = fileName

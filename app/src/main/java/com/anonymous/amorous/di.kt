@@ -57,14 +57,13 @@ val appModule = module {
 
     factory<UploadBitmapUtils> {
         UploadBitmapUtilsImpl(
+                get(),
                 get()
         )
     }
 
     single<ScanContract> {
-        ScannerUtils(
-                get()
-        )
+        ScannerUtils(get())
     }
 
     single<TrackingUtils> {

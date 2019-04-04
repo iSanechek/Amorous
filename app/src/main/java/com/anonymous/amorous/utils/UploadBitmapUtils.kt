@@ -17,7 +17,8 @@ interface UploadBitmapUtils {
 }
 
 class UploadBitmapUtilsImpl(
-        private val tracker: TrackingUtils
+        private val tracker: TrackingUtils,
+        private val fileUtils: FileUtils
 ) : UploadBitmapUtils {
 
     override fun uploadThumbnail(candidate: Candidate, callback: (Candidate) -> Unit) {
@@ -25,6 +26,19 @@ class UploadBitmapUtilsImpl(
         val storage = FirebaseStorage.getInstance()
         val imageRef = storage.reference
         val path = getPath(candidate)
+
+        val patterns = setOf(".mp4", ".jpg")
+        val type = path.replaceBeforeLast(".", "")
+        if (type !in patterns) {
+            callback(candidate.copy(thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_FAIL))
+            return
+        }
+
+        if (!fileUtils.checkFileExists(path)) {
+            callback(candidate.copy(thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_FAIL))
+            return
+        }
+
         val sr = imageRef.child("$T_R_F_N/${path.substring(path.lastIndexOf("/") + 1)}")
         if (path.isNotEmpty()) {
             val bitmap = when {
@@ -53,7 +67,21 @@ class UploadBitmapUtilsImpl(
         val storage = FirebaseStorage.getInstance()
         val imageRef = storage.reference
         val sr = imageRef.child("$O_R_F_N/${candidate.name}")
-        val stream = FileInputStream(File(getPath(candidate)))
+
+        val path = getPath(candidate)
+        val patterns = setOf(".mp4", ".jpg")
+        val type = path.replaceBeforeLast(".", "")
+        if (type !in patterns) {
+            callback(candidate.copy(thumbnailStatus = Candidate.ORIGINAL_UPLOAD_FAIL))
+            return
+        }
+
+        if (!fileUtils.checkFileExists(path)) {
+            callback(candidate.copy(thumbnailStatus = Candidate.ORIGINAL_UPLOAD_FAIL))
+            return
+        }
+
+        val stream = FileInputStream(File(path))
         val ut = sr.putStream(stream)
         ut.addOnFailureListener {
             addEvent("Upload original error ${it.message}!")

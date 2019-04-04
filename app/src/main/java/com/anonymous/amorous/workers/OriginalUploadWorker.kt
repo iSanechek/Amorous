@@ -36,17 +36,24 @@ class OriginalUploadWorker(
                             }
                         }
                     }
-                    else -> sendEvent(TAG, "Candidate ${candidate.name} for upload original fail! Path empty")
+                    else -> addEvent(TAG, "Candidate ${candidate.name} for upload original fail! Path empty")
                 }
             }
-            else -> sendEvent(TAG, "Candidate for upload original is empty!")
+            else -> addEvent(TAG, "Candidate for upload original is empty!")
        }
-        sendEvents()
         Result.success()
     } catch (e: Exception) {
-        sendEvent(TAG, "Upload original fail! ${e.message}")
-        sendEvents()
-        Result.failure()
+        val retryCount = pref.getWorkerRetryCountValue(TAG)
+        if (retryCount < configuration.getWorkerRetryCount()) {
+            val value = retryCount.inc()
+            pref.updateWorkerRetryCountValue(TAG, value)
+            addEvent(TAG, "Загрузка оригинала завершилось с ошибкой. Повторная попатка номер $value")
+            Result.retry()
+        } else {
+            addEvent(TAG, "Не удалось загрузить оригинал $retryCount")
+            pref.updateWorkerRetryCountValue(TAG, 0)
+            Result.failure()
+        }
     }
 
     private fun up(candidate: Candidate) {

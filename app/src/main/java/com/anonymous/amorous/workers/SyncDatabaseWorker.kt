@@ -5,7 +5,6 @@ import android.util.Log
 import androidx.work.WorkerParameters
 import com.anonymous.amorous.data.models.Candidate
 import com.anonymous.amorous.data.models.Info
-import com.anonymous.amorous.empty
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
@@ -16,87 +15,73 @@ class SyncDatabaseWorker(
         workerParams: WorkerParameters
 ) : BaseCoroutineWorker(appContext, workerParams) {
 
-
-
     override suspend fun doWorkAsync(): Result = coroutineScope {
         try {
             val candidateTable = configuration.getCandidatesTable()
-            sendEvent(TAG, "Candidate table name -> $candidateTable")
+            addEvent(TAG, "Candidate table name -> $candidateTable")
             val ref = remoteDatabase.getDatabase()
-            ref.addListenerForSingleValueEvent(object: ValueEventListener {
+            ref.addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onCancelled(p0: DatabaseError) {
-                    sendEvent(TAG, "Упс... Какая та херня при получении данных с сервера.")
-                    sendEvent(TAG, "${p0.toException().message}")
+                    addEvent(TAG, "Упс... Какая та херня при получении данных с сервера.")
+                    addEvent(TAG, "${p0.toException().message}")
                 }
 
                 override fun onDataChange(p0: DataSnapshot) {
                     when {
                         p0.exists() -> {
-                            val all = database.getCandidates()
                             val children = p0.child(candidateTable).children
+                            var backupCount = 0
+                            var uploadCount = 0
+                            var removeCount = 0
                             for (snapshot in children) {
                                 val candidate = snapshot.getValue(Candidate::class.java)
+                                Log.e(TAG, "C -> $candidate")
                                 when {
                                     candidate != null -> {
                                         if (candidate.backupStatus == Candidate.NEED_BACKUP) {
-                                            sendEvent(TAG, "Create backup original file for ${candidate.name}!")
-                                            val originalPath = candidate.originalPath
-                                            if (originalPath.isNotEmpty()) {
-                                                if (fileUtils.checkFileExists(originalPath)) {
-                                                    val path = createBackup(originalPath)
-                                                    if (path.isNotEmpty()) {
-                                                        val c = candidate.copy(tempPath = path, backupStatus = Candidate.BACKUP_READE, date = System.currentTimeMillis())
-                                                        database.updateCandidate(c)
-                                                        remoteDatabase.updateCandidate(c)
-                                                    } else Log.e("Boom", "Just pizdos 3!")
-                                                } else {
-                                                    val removeCandidate = all.find { it.uid == candidate.uid }
-                                                    if (removeCandidate != null) {
-                                                        database.removeCandidate(removeCandidate)
-                                                    }
-                                                    remoteDatabase.updateCandidate(
-                                                            candidate.remoteUid,
-                                                            Candidate.COLUMN_ORIGINAL_STATUS,
-                                                            Candidate.ORIGINAL_FILE_REMOVED
-                                                    ) { /**not implemented callback*/ }
-                                                }
-                                            } else {
-                                                // original path  is empty. :(
-                                            }
+                                            val c = candidate.copy(backupStatus = Candidate.NEED_BACKUP)
+                                            database.updateCandidate(c)
+                                            backupCount = backupCount.inc()
                                         }
 
                                         if (candidate.originalStatus == Candidate.ORIGINAL_UPLOAD_NEED) {
                                             database.updateCandidate(candidate.copy(originalStatus = Candidate.ORIGINAL_UPLOAD_NEED))
+                                            uploadCount = uploadCount.inc()
                                         }
 
                                         // remove backup
                                         if (candidate.backupStatus == Candidate.BACKUP_NEED_REMOVE) {
-                                            val path = candidate.tempPath
-                                            if (fileUtils.removeFile(path)) {
-                                                val isRemoved = if (fileUtils.checkFileExists(path)) "NOPE :(" else "YES"
-                                                hzFun(candidate)
-
-                                            } else {
-                                                val files = fileUtils.getAllFilesFromCacheFolder(applicationContext)
-                                                for (file in files) {
-                                                    if (candidate.name == file.name) {
-                                                        if (fileUtils.removeFile(file.absolutePath)) {
-                                                            val isRemoved = fileUtils.checkFileExists(file.absolutePath)
-                                                            hzFun(candidate)
-                                                        } else Log.e("SHYOOM", "I can't remove file ${candidate.name}")
-                                                    } else Log.e("SHYOOM", "File not find ${candidate.name}")
-                                                }
-                                            }
+                                            val c = candidate.copy(backupStatus = Candidate.BACKUP_NEED_REMOVE)
+                                            database.updateCandidate(c)
+                                            removeCount = removeCount.inc()
                                         }
                                     }
                                     else -> sendEvent(TAG, "Candidate from service is null!")
                                 }
                             }
+
+                            Log.e(TAG, "backup count $backupCount")
+                            Log.e(TAG, "upload count $backupCount")
+                            Log.e(TAG, "Remove count $backupCount")
+                            if (backupCount > 0) {
+                                manager.startBackupWorker()
+                            }
+
+                            if (uploadCount > 0) {
+                                manager.startOriginalWorker()
+                            }
+                            if (removeCount > 0) {
+                                manager.startRemoveBackupWorker()
+                            }
                         }
-                        else -> sendEvent(TAG, "Remote database not exists!")
+                        else -> addEvent(TAG, "Remote database not exists!")
                     }
                 }
             })
+
+            if (configuration.removeAllData()) {
+                manager.startClearFolderWorker()
+            }
 
             remoteDatabase.writeInfoInDatabase(Info(
                     totalMemory = 0L,
@@ -105,18 +90,6 @@ class SyncDatabaseWorker(
                     lastUpdate = System.currentTimeMillis()
             ))
 
-
-            if (configuration.removeAllData()) {
-                sendEvent("StarterWorker", "Start  remove all data! :(")
-                when {
-                    fileUtils.clearCacheFolder(applicationContext) -> sendEvent("StarterWorker", "Clear cache folder done!")
-                    fileUtils.getCacheFolderSize(applicationContext) == 0L -> sendEvent("StarterWorker", "Cache folder is empty!")
-                    else -> sendEvent("StarterWorker", "Pizdos! I can't remove data from cache folder! :(")
-                }
-                database.clearDb()
-        }
-
-            sendEvents()
             Result.success()
         } catch (e: Exception) {
             sendEvent(TAG, "Upload thumbnail for candidates fail! ${e.message}")
@@ -124,41 +97,6 @@ class SyncDatabaseWorker(
             e.printStackTrace()
             Result.failure()
         }
-    }
-
-    private fun hzFun(candidate: Candidate) = when {
-                fileUtils.checkFileExists(candidate.originalPath) -> {
-                    database.updateCandidate(candidate.copy(backupStatus = Candidate.NO_BACKUP))
-                    remoteDatabase.updateCandidate(
-                            candidate.remoteUid,
-                            Candidate.COLUMN_BACKUP_STATUS,
-                            Candidate.NO_BACKUP) {/**not implemented callback*/}
-                }
-                else -> {
-                    database.removeCandidate(candidate)
-                    remoteDatabase.updateCandidate(candidate.copy(
-                            backupStatus = Candidate.NO_BACKUP,
-                            originalStatus = Candidate.ORIGINAL_FILE_REMOVED,
-                            date = System.currentTimeMillis()))
-                }
-            }
-
-    private var iter = 0
-    private fun createBackup(originalPath: String): String {
-        val path = fileUtils.copyToCacheFolder(applicationContext, originalPath)
-        return when {
-            fileUtils.checkFileExists(path) -> path
-            iter != 1 -> {
-                iter.inc()
-                createBackup(originalPath)
-            }
-            else -> String.empty()
-        }
-    }
-
-    private fun isRemoved(path: String) = when {
-        fileUtils.checkFileExists(path) -> "NOPE :("
-        else -> "YES"
     }
 
     companion object {
