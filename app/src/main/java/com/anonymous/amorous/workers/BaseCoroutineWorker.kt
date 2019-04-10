@@ -17,8 +17,6 @@ abstract class BaseCoroutineWorker(
 ) : CoroutineWorker(context, parameters), KoinComponent {
 
     private val tracker: TrackingUtils by inject()
-    private val listEvents = hashSetOf<String>()
-
     val scanner: ScanContract by inject()
     val database: LocalDatabase by inject()
     val pref: PrefUtils by inject()
@@ -29,27 +27,19 @@ abstract class BaseCoroutineWorker(
     val manager: WorkersManager by inject()
 
     override val coroutineContext: CoroutineDispatcher
-        get() = Dispatchers.IO
+        get() = Dispatchers.Main
 
     override suspend fun doWork(): Result = try {
-        doWorkAsync()
+        workAction()
     } catch (e: Exception) {
-        sendEvent("BaseWorker", "Do worker error! ${e.message}")
-        sendEvents()
+        addEvent("BaseWorker", "Do worker error! ${e.message}")
+        e.printStackTrace()
         Result.failure()
     }
 
-    abstract suspend fun doWorkAsync(): Result
-
-    fun sendEvent(tag: String, event: String) {
-        tracker.sendEvent(tag, event)
-    }
-
-    fun sendEvents() {
-        tracker.sendOnServer()
-    }
+    abstract suspend fun workAction(): Result
 
     fun addEvent(tag: String, event: String) {
-        remoteDatabase.writeEventInDatabase(Event(id = "", title = tag, date = Event.getTime(), event = event))
+        val e = Event(id = Event.getUid(), title = tag, date = Event.getTime(), event = event)
     }
 }

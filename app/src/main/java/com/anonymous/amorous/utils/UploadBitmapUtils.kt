@@ -22,7 +22,6 @@ class UploadBitmapUtilsImpl(
 ) : UploadBitmapUtils {
 
     override fun uploadThumbnail(candidate: Candidate, callback: (Candidate) -> Unit) {
-        addEvent("Start upload thumbnail for ${candidate.name}!")
         val storage = FirebaseStorage.getInstance()
         val imageRef = storage.reference
         val path = getPath(candidate)
@@ -63,7 +62,6 @@ class UploadBitmapUtilsImpl(
     }
 
     override fun uploadOriginal(candidate: Candidate, callback: (Candidate) -> Unit) {
-        addEvent("Start upload original for ${candidate.name}!")
         val storage = FirebaseStorage.getInstance()
         val imageRef = storage.reference
         val sr = imageRef.child("$O_R_F_N/${candidate.name}")
@@ -85,11 +83,9 @@ class UploadBitmapUtilsImpl(
         val ut = sr.putStream(stream)
         ut.addOnFailureListener {
             addEvent("Upload original error ${it.message}!")
-            tracker.sendOnServer()
             callback(candidate.copy(originalStatus = Candidate.ORIGINAL_UPLOAD_FAIL))
         }.addOnSuccessListener {
             addEvent("Upload original done! ${it.metadata?.name}")
-            tracker.sendOnServer()
             callback(candidate.copy(originalStatus = Candidate.ORIGINAL_UPLOAD_DONE))
         }
     }

@@ -8,6 +8,7 @@ import android.provider.MediaStore
 import android.util.Log
 import com.anonymous.amorous.data.models.Candidate
 import com.anonymous.amorous.empty
+import com.anonymous.amorous.toUid
 import java.io.File
 import java.util.*
 
@@ -24,14 +25,16 @@ sealed class ScanCallback {
 }
 
 interface ScanContract {
-    fun startScan(): ScanCallback
     fun scanFolders(callback: (ScanCallback) -> Unit)
     fun scanRoot(callback: (ScanCallback) -> Unit)
     fun getImageThumbnail(path: String): Bitmap
     fun getVideoThumbnail(path: String): Bitmap
 }
 
-class ScannerUtils(private val pref: PrefUtils) : ScanContract {
+class ScannerUtils(private val pref: PrefUtils,
+                   private val track: TrackingUtils) : ScanContract {
+
+    private val cache = mutableListOf<Candidate>()
 
     override fun scanFolders(callback: (ScanCallback) -> Unit) {
         if (!isExternalStorageReadable()) {
@@ -40,15 +43,17 @@ class ScannerUtils(private val pref: PrefUtils) : ScanContract {
         }
 
         val directory = getRootDir()
-        Log.e("TEST", "directory $directory")
         val patterns = pref.scanFolders
-        Log.e("TEST", "Patterns $patterns")
-        val temp = mutableListOf<Candidate>()
+        if (cache.isNotEmpty()) {
+            cache.clear()
+        }
         directory.listFiles()
                 .filter { it.name in patterns }
-                .forEach { temp.addAll(findFiles(it)) }
+                .forEach {
+                    findF(it)
+                }
         when {
-            temp.isNotEmpty() -> callback(ScanCallback.ResultOk(temp))
+            cache.isNotEmpty() -> callback(ScanCallback.ResultOk(cache))
             else -> callback(ScanCallback.ResultFail(ScanCallback.Fail.Empty))
         }
     }
@@ -67,31 +72,14 @@ class ScannerUtils(private val pref: PrefUtils) : ScanContract {
         }
     }
 
-    override fun startScan(): ScanCallback {
-        if (!isExternalStorageReadable()) return ScanCallback.ResultFail(ScanCallback.Fail.NotReadable)
-        val patterns = arrayListOf("Movies", "Pictures", "Download")
-        val directory = File(Environment.getExternalStorageDirectory().path)
-        val temp = mutableListOf<Candidate>()
-        directory.listFiles()
-                .filter {
-                    it.name in patterns
-                }
-                .forEach {
-                    temp.addAll(findFiles(it))
-                }
-        return ScanCallback.ResultOk(temp)
-    }
-
-    private fun findFiles(directory: File): List<Candidate> {
-        val candidates = mutableListOf<Candidate>()
-        val items = directory.listFiles()
-        for (item in items) {
+    private fun findF(directory: File) {
+        for (item in directory.listFiles()) {
             if (item.isDirectory) {
-                findFiles(item)
+                findF(item)
             } else if (item.isFile) {
                 if (item.name.endsWith(".mp4", ignoreCase = true)) {
-                    candidates.add(Candidate(
-                            uid = item.name.hashCode(),
+                    cache.add(Candidate(
+                            uid = item.name.toUid(),
                             name = item.name,
                             thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_NEED,
                             type = Candidate.VIDEO_TYPE,
@@ -105,8 +93,8 @@ class ScannerUtils(private val pref: PrefUtils) : ScanContract {
                 }
 
                 if (item.name.endsWith(".jpg", ignoreCase = true)) {
-                    candidates.add(Candidate(
-                            uid = item.name.hashCode(),
+                    cache.add(Candidate(
+                            uid = item.name.toUid(),
                             name = item.name,
                             thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_NEED,
                             type = Candidate.IMAGE_TYPE,
@@ -120,7 +108,6 @@ class ScannerUtils(private val pref: PrefUtils) : ScanContract {
                 }
             }
         }
-        return candidates
     }
 
     override fun getImageThumbnail(path: String): Bitmap = ThumbnailUtils.extractThumbnail(BitmapFactory.decodeFile(path), 200, 200)

@@ -9,11 +9,8 @@ import com.anonymous.amorous.empty
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
-import java.util.*
-import kotlin.collections.HashSet
 
 interface TrackingUtils {
-    fun sendEvent(tag: String, events: HashSet<String>)
     fun sendEvent(tag: String, event: String)
     fun sendOnServer()
     fun log(msg: String?)
@@ -37,12 +34,15 @@ class TrackingUtilsImpl(private val remoteDatabase: RemoteDatabase,
                     items.put(item)
                 }
                 val msg = jo.put("events", items)
-                remoteDatabase.writeMessageInDatabase(Message("", msg.toString())) {
-                    database.clearEvents(events.map { it.id }.toSet())
-                }
-            } else addEvent("Events is empty!")
+//                remoteDatabase.writeMessage(Message(String.empty(), msg.toString())) {
+//                    when {
+//                        it.isSuccess -> { database.clearEvents(events.map { event -> event.id }.toSet()) }
+//                        it.isFailure -> sendError(Message(String.empty(), "Ошибка при отправке events! ${it.exceptionOrNull()?.message}"))
+//                    }
+//                }
+            }
         } catch (e: JSONException) {
-            addEvent(e.message ?: "Create message json error!")
+            sendError(Message(String.empty(), "Ошибка при создание json! ${e.message}"))
         }
     }
 
@@ -54,14 +54,10 @@ class TrackingUtilsImpl(private val remoteDatabase: RemoteDatabase,
 
     override fun sendEvent(tag: String, event: String) {
         log(event)
-        database.saveEvent(Event(id = Event.getUid(), title = tag, date = Event.getTime(), event = event))
+//        database.saveEvent(Event(id = Event.getUid(), title = tag, date = Event.getTime(), event = event))
     }
 
-    override fun sendEvent(tag: String, events: HashSet<String>) {
-
-    }
-
-    private fun addEvent(msg: String) {
-        remoteDatabase.writeMessageInDatabase(Message(String.empty(), msg)) {}
+    private fun sendError(msg: Message) {
+        remoteDatabase.writeMessage(msg) {}
     }
 }

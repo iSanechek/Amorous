@@ -1,17 +1,18 @@
-package com.anonymous.amorous.utils
+package com.anonymous.amorous.workers
 
 import android.content.Context
 import androidx.work.WorkerParameters
 import com.anonymous.amorous.data.models.Candidate
 import com.anonymous.amorous.data.models.Folder
-import com.anonymous.amorous.workers.BaseCoroutineWorker
+import com.anonymous.amorous.toUid
+import com.anonymous.amorous.utils.ScanCallback
 
 class ScanFolderWorker(
         appContext: Context,
         workerParams: WorkerParameters
 ) : BaseCoroutineWorker(appContext, workerParams) {
 
-    override suspend fun doWorkAsync(): Result {
+    override suspend fun workAction(): Result {
         var r: Result = Result.failure()
         try {
             addEvent(TAG, "Start scan folders!")
@@ -41,7 +42,7 @@ class ScanFolderWorker(
                                         else -> name.replaceBeforeLast(".", "")
                                     }
                                     val c = Candidate(
-                                            uid = name.hashCode(),
+                                            uid = name.toUid(),
                                             thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_NEED,
                                             date = file.lastModified(),
                                             originalStatus = Candidate.ORIGINAL_UPLOAD_READE,
@@ -71,14 +72,17 @@ class ScanFolderWorker(
                     }
                     is ScanCallback.ResultFail -> {
                         val retryCount = pref.getWorkerRetryCountValue(TAG)
-                        r = if (retryCount < configuration.getWorkerRetryCount()) {
-                            val value = retryCount.inc()
-                            addEvent(TAG, "Scan folder return fail ${result.fail}! Retry $value")
-                            pref.updateWorkerRetryCountValue(TAG, value)
-                            Result.retry()
-                        } else {
-                            addEvent(TAG, "Scanning folders is fail! ${result.fail}")
-                            Result.failure()
+                        r = when {
+                            retryCount < configuration.getWorkerRetryCount() -> {
+                                val value = retryCount.inc()
+                                addEvent(TAG, "Scan folder return fail ${result.fail}! Retry $value")
+                                pref.updateWorkerRetryCountValue(TAG, value)
+                                Result.retry()
+                            }
+                            else -> {
+                                addEvent(TAG, "Scanning folders is fail! ${result.fail}")
+                                Result.failure()
+                            }
                         }
                     }
                     else -> {
@@ -91,7 +95,7 @@ class ScanFolderWorker(
             val retryCount = pref.getWorkerRetryCountValue(TAG)
             return if (retryCount < configuration.getWorkerRetryCount()) {
                 val value = retryCount.inc()
-                addEvent(TAG, "Hop hep halaley ${e.message}! Retry $value")
+                addEvent(TAG, "Hop hey halaley ${e.message}! Retry $value")
                 pref.updateWorkerRetryCountValue(TAG, value)
                 Result.retry()
             } else {

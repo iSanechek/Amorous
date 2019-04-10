@@ -1,6 +1,9 @@
 package com.anonymous.amorous
 
+import java.util.*
+
 fun String.Companion.empty() = ""
+fun String.toUid(): String = this.hashCode().toString()
 
 const val DB_T_U = "users"
 const val DB_T_C = "candidates"

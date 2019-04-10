@@ -5,9 +5,9 @@ import com.google.firebase.database.Exclude
 import com.google.firebase.database.IgnoreExtraProperties
 
 @IgnoreExtraProperties
-data class Folder(var name: String? = String.empty(),
+data class Folder(var name: String = String.empty(),
                   var lastModification: Long? = 0L,
-                  var remoteKey: String? = String.empty()) {
+                  var remoteKey: String = String.empty()) {
 
     @Exclude
     fun toMap(): Map<String, Any?> = mapOf(

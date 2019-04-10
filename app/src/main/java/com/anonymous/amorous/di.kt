@@ -2,8 +2,8 @@ package com.anonymous.amorous
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.anonymous.amorous.data.database.DatabaseHandler
 import com.anonymous.amorous.data.database.LocalDatabase
+import com.anonymous.amorous.data.database.StorageImpl
 import com.anonymous.amorous.service.JobSchContract
 import com.anonymous.amorous.service.JobSchedulerService
 import com.anonymous.amorous.utils.*
@@ -63,7 +63,7 @@ val appModule = module {
     }
 
     single<ScanContract> {
-        ScannerUtils(get())
+        ScannerUtils(get(), get())
     }
 
     single<TrackingUtils> {
@@ -74,7 +74,8 @@ val appModule = module {
     }
 
     single<LocalDatabase> {
-        DatabaseHandler(androidContext().applicationContext)
+//        DatabaseHandler(androidContext().applicationContext)
+        StorageImpl(get())
     }
 
     factory<RemoteDatabase> {

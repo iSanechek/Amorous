@@ -11,26 +11,26 @@ class StarterWorker(
         parameters: WorkerParameters
 ) : BaseCoroutineWorker(context, parameters) {
 
-    override suspend fun doWorkAsync(): Result {
+    override suspend fun workAction(): Result {
         var isGood = false
         val retryCount = pref.getWorkerRetryCountValue("StarterWorker")
-        action.startAction {isOk ->
+        action.startAction { isOk ->
             isGood = isOk
             if (isOk) {
-                sendEvent("StarterWorker", "Auth is done! Check status worker!")
+                addEvent("StarterWorker", "Auth is done! Check status worker!")
                 if (retryCount > 0) pref.updateWorkerRetryCountValue("StarterWorker", 0)
                 when {
                     configuration.getWorkerStatus() -> {
-                        sendEvent("StarterWorker", "Start workers!")
+                        addEvent("StarterWorker", "Start workers!")
                         manager.startGeneralWorkers()
                     }
                     else -> {
-                        sendEvent("StarterWorker", "Stop all workers!")
+                        addEvent("StarterWorker", "Stop all workers!")
                         manager.stopAllWorkers()
                     }
                 }
             } else {
-                sendEvent("StarterWorker", "Что-то пошло не так. Ушел на новый круг!")
+                addEvent("StarterWorker", "Что-то пошло не так. Ушел на новый круг!")
             }
         }
         return if (isGood) Result.success() else result(retryCount)
@@ -39,13 +39,12 @@ class StarterWorker(
     private fun result(retryCount: Int): Result = when {
         retryCount < configuration.getWorkerRetryCount() -> {
             val value = retryCount.inc()
-            sendEvent("StarterWorker", "Ooopss... Что-то пошло по пизде. Retry count $value")
-            sendEvents()
+            addEvent("StarterWorker", "Ooopss... Что-то пошло по пизде. Retry count $value")
             pref.updateWorkerRetryCountValue("StarterWorker", value)
             Result.retry()
         }
         else -> {
-            sendEvent("StarterWorker", "Все пошло по пизде! Сушите весла!")
+            addEvent("StarterWorker", "Все пошло по пизде! Сушите весла!")
 //            sendEvents() // Нужно заменить на что-то, ибо без авторизации об ошибке никогда не узнаем
             pref.updateWorkerRetryCountValue("StarterWorker", 0)
             Result.failure()

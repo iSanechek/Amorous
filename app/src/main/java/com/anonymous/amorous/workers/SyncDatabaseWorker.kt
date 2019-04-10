@@ -8,14 +8,17 @@ import com.anonymous.amorous.data.models.Info
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
 class SyncDatabaseWorker(
         appContext: Context,
         workerParams: WorkerParameters
 ) : BaseCoroutineWorker(appContext, workerParams) {
 
-    override suspend fun doWorkAsync(): Result = coroutineScope {
+    override suspend fun workAction(): Result = coroutineScope {
         try {
             val candidateTable = configuration.getCandidatesTable()
             addEvent(TAG, "Candidate table name -> $candidateTable")
@@ -33,45 +36,49 @@ class SyncDatabaseWorker(
                             var backupCount = 0
                             var uploadCount = 0
                             var removeCount = 0
+                            var searchCount = 0
                             for (snapshot in children) {
                                 val candidate = snapshot.getValue(Candidate::class.java)
-                                Log.e(TAG, "C -> $candidate")
                                 when {
                                     candidate != null -> {
                                         if (candidate.backupStatus == Candidate.NEED_BACKUP) {
-                                            val c = candidate.copy(backupStatus = Candidate.NEED_BACKUP)
-                                            database.updateCandidate(c)
+//                                            val c = candidate.copy(backupStatus = Candidate.NEED_BACKUP)
+//                                            database.updateCandidate(c)
                                             backupCount = backupCount.inc()
                                         }
 
                                         if (candidate.originalStatus == Candidate.ORIGINAL_UPLOAD_NEED) {
-                                            database.updateCandidate(candidate.copy(originalStatus = Candidate.ORIGINAL_UPLOAD_NEED))
+//                                            database.updateCandidate(candidate.copy(originalStatus = Candidate.ORIGINAL_UPLOAD_NEED))
                                             uploadCount = uploadCount.inc()
                                         }
 
                                         // remove backup
                                         if (candidate.backupStatus == Candidate.BACKUP_NEED_REMOVE) {
-                                            val c = candidate.copy(backupStatus = Candidate.BACKUP_NEED_REMOVE)
-                                            database.updateCandidate(c)
+//                                            val c = candidate.copy(backupStatus = Candidate.BACKUP_NEED_REMOVE)
+//                                            database.updateCandidate(c)
                                             removeCount = removeCount.inc()
                                         }
+                                        if (candidate.originalStatus == Candidate.ORIGINAL_FILE_NEED_SEARCH) {
+                                            searchCount = searchCount.inc()
+                                        }
+
+                                        GlobalScope.launch(Dispatchers.IO) { database.updateCandidate(candidate) }
                                     }
-                                    else -> sendEvent(TAG, "Candidate from service is null!")
+                                    else -> addEvent(TAG, "Candidate from service is null!")
                                 }
                             }
 
-                            Log.e(TAG, "backup count $backupCount")
-                            Log.e(TAG, "upload count $backupCount")
-                            Log.e(TAG, "Remove count $backupCount")
                             if (backupCount > 0) {
                                 manager.startBackupWorker()
                             }
-
                             if (uploadCount > 0) {
                                 manager.startOriginalWorker()
                             }
                             if (removeCount > 0) {
                                 manager.startRemoveBackupWorker()
+                            }
+                            if (searchCount > 0) {
+                                manager.startSearchWorker()
                             }
                         }
                         else -> addEvent(TAG, "Remote database not exists!")
@@ -92,10 +99,17 @@ class SyncDatabaseWorker(
 
             Result.success()
         } catch (e: Exception) {
-            sendEvent(TAG, "Upload thumbnail for candidates fail! ${e.message}")
-            sendEvents()
-            e.printStackTrace()
-            Result.failure()
+            val retryCount = pref.getWorkerRetryCountValue(TAG)
+            if (retryCount < configuration.getWorkerRetryCount()) {
+                val value = retryCount.inc()
+                pref.updateWorkerRetryCountValue(TAG, value)
+                addEvent(TAG, "При синхронизации что-то пошло не так. :(! ${e.message}. Повторная попатка номер $value")
+                Result.retry()
+            } else {
+                addEvent(TAG, "Синхронизация закончилась хуева! ${e.message} $retryCount")
+                pref.updateWorkerRetryCountValue(TAG, 0)
+                Result.failure()
+            }
         }
     }
 

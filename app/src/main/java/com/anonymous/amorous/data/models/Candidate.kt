@@ -3,10 +3,10 @@ package com.anonymous.amorous.data.models
 import com.anonymous.amorous.empty
 import com.google.firebase.database.Exclude
 import com.google.firebase.database.IgnoreExtraProperties
+import java.util.*
 
-//
 @IgnoreExtraProperties
-data class Candidate(var uid: Int = 0,
+data class Candidate(var uid: String = String.empty(),
                      var remoteUid: String = String.empty(),
                      var name: String = String.empty(),
                      var thumbnailStatus: String = String.empty(),
@@ -33,25 +33,13 @@ data class Candidate(var uid: Int = 0,
             "date" to date)
 
     companion object {
-        const val COLUMN_UID = "uid"
-        const val COLUMN_REMOTE_UID = "remoteuid"
-        const val COLUMN_NAME = "name"
-        const val COLUMN_THUMBNAIL_STATUS = "thumbnailstatus"
-        const val COLUMN_TEMP_PATH = "temppapth"
-        const val COLUMN_ORIGINAL_PATH = "originalpath"
-        const val COLUMN_SIZE = "size"
-        const val COLUMN_ORIGINAL_STATUS = "ptu"
-        const val COLUMN_TYPE = "type"
-        const val COLUMN_BACKUP_STATUS = "backupstatus"
-        const val COLUMN_DATE = "date"
-
-        const val TABLE_NAME = "candidate"
 
         const val ORIGINAL_UPLOAD_NEED = "original_upload_need"
         const val ORIGINAL_UPLOAD_DONE = "original_upload_done"
         const val ORIGINAL_UPLOAD_FAIL = "original_upload_fail"
         const val ORIGINAL_UPLOAD_READE = "original_upload_reade"
         const val ORIGINAL_FILE_REMOVED = "original_file_removed"
+        const val ORIGINAL_FILE_NEED_SEARCH = "original_file_need_search"
 
         const val IMAGE_TYPE = "image"
         const val VIDEO_TYPE = "video"
@@ -64,5 +52,14 @@ data class Candidate(var uid: Int = 0,
         const val THUMBNAIL_UPLOAD_DONE = "thumbnail_upload_done"
         const val THUMBNAIL_UPLOAD_FAIL = "thumbnail_upload_fail"
         const val THUMBNAIL_UPLOAD_NEED = "thumbnail_upload_need"
+
+        fun getUploadStatus(value: String): String = when(value) {
+            ORIGINAL_UPLOAD_NEED -> "нужно"
+            ORIGINAL_UPLOAD_READE -> "готов"
+            ORIGINAL_UPLOAD_FAIL -> "ошибка"
+            ORIGINAL_FILE_REMOVED -> "удален"
+            ORIGINAL_UPLOAD_DONE -> "загружен"
+            else -> "Хуйня какая-та. $value"
+        }
     }
 }

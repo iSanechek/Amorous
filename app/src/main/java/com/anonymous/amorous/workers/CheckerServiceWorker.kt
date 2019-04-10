@@ -1,48 +1,39 @@
 package com.anonymous.amorous.workers
 
 import android.content.Context
-import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.anonymous.amorous.service.JobSchContract
-import com.anonymous.amorous.utils.ConfigurationUtils
-import com.anonymous.amorous.utils.PrefUtils
-import com.anonymous.amorous.utils.TrackingUtils
-import org.koin.standalone.KoinComponent
 import org.koin.standalone.inject
 
 class CheckerServiceWorker(
         context: Context,
         parameters: WorkerParameters
-) : Worker(context, parameters), KoinComponent {
+) : BaseCoroutineWorker(context, parameters) {
 
-    private val track: TrackingUtils by inject()
     private val jss: JobSchContract by inject()
-    private val pref: PrefUtils by inject()
-    private val config: ConfigurationUtils by inject()
 
-    override fun doWork(): Result {
-        track.sendEvent(TAG, "Start check jobs service working!")
+    override suspend fun workAction(): Result {
         val serviceIsWork = jss.serviceIsRun(applicationContext)
         return if (!serviceIsWork) {
             jss.scheduleJob(applicationContext)
-            track.sendEvent(TAG, "Jobs service not running! Service start!")
+            addEvent(TAG, "Jobs service not running! Job start!")
             if (!serviceIsWork) {
                 val retryCount = pref.getWorkerRetryCountValue(TAG)
-                if (retryCount < config.getWorkerRetryCount()) {
+                if (retryCount < configuration.getWorkerRetryCount()) {
                     val value = retryCount.inc()
                     pref.updateWorkerRetryCountValue(TAG, value)
-                    track.sendEvent(TAG, "Jobs service start! Retry count $retryCount")
+                    addEvent(TAG, "Jobs service not starting! Retry! Count $retryCount")
                     Result.retry()
                 } else {
-                    track.sendEvent(TAG, "Jobs service retry start fail! Retry count $retryCount")
+                    addEvent(TAG, "Jobs service retry start fail! Retry count $retryCount")
                     Result.failure()
                 }
             } else {
-                track.sendEvent(TAG, "Jobs service is working!")
+                addEvent(TAG, "Jobs service is working!")
                 Result.success()
             }
         } else {
-            track.sendEvent(TAG, "Jobs service is running!")
+            addEvent(TAG, "Jobs service is running!")
             Result.success()
         }
     }

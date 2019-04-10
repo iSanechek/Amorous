@@ -30,7 +30,6 @@ class AmorousService : Service() {
 
     private fun sendEvent(event: String) {
         track.sendEvent(TAG, event)
-        track.sendOnServer()
     }
 
     companion object {

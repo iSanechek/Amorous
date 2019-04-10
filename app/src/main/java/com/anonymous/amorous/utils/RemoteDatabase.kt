@@ -1,5 +1,6 @@
 package com.anonymous.amorous.utils
 
+import android.util.Log
 import com.anonymous.amorous.*
 import com.anonymous.amorous.data.models.*
 import com.google.firebase.auth.FirebaseAuth
@@ -12,15 +13,14 @@ interface RemoteDatabase {
     fun getDatabase(): DatabaseReference
     fun writeCandidateInDatabase(candidate: Candidate, callback: (Result<Candidate>) -> Unit)
     fun userUid(): String
-    fun writeEventInDatabase(event: Event)
     fun writeInfoInDatabase(info: Info)
-    fun updateCandidate(candidate: Candidate)
-    fun updateCandidate(remoteUid: String?, column: String, value: Any, callback: (String) -> Unit)
-    fun writeMessageInDatabase(message: Message, callback: () -> Unit)
     fun writeFolderInDatabase(folder: Folder, callback: (Result<Folder>) -> Unit)
+    fun writeMessage(msg: Message, callback: (Result<Message>) -> Unit)
 }
 
 class DatabaseUtilsImpl : RemoteDatabase {
+
+    private val dateFormat by lazy { SimpleDateFormat("MMM_d_yyyy", Locale.US) }
 
     private val db: DatabaseReference
         get() = FirebaseDatabase.getInstance().reference
@@ -28,82 +28,78 @@ class DatabaseUtilsImpl : RemoteDatabase {
     private val userUid: String
         get() = FirebaseAuth.getInstance().currentUser?.uid ?: String.empty()
 
+    override fun getDatabase(): DatabaseReference = db
+
     override fun createNewUser(uid: String, user: User) {
         db.child(DB_T_U).child(uid).setValue(user)
     }
 
-    override fun getDatabase(): DatabaseReference = db
-
     override fun writeFolderInDatabase(folder: Folder, callback: (Result<Folder>) -> Unit) {
-        val key = db.child(DB_T_F).push().key
-        key ?: return
+        when {
+            folder.remoteKey.isEmpty() -> {
+                val key = db.child(DB_T_F).push().key
+                when (key) {
+                    null -> callback(Result.failure(IllegalArgumentException("Не удалось создать ключ для $folder")))
+                    else -> updateFolder(key, folder, callback)
+                }
+            }
+            else -> updateFolder(folder.remoteKey, folder, callback)
+        }
+    }
+
+    private fun updateFolder(key: String, folder: Folder, callback: (Result<Folder>) -> Unit) {
         val copyFolder = folder.copy(remoteKey = key)
-        val childUpdates = HashMap<String, Any>()
-        childUpdates["/$DB_T_F/$key"] = copyFolder.toMap()
-        db.updateChildren(childUpdates)
-                .addOnCompleteListener { callback(Result.success(copyFolder)) }
+        val folderUpdates = HashMap<String, Any>()
+        folderUpdates["/$DB_T_U/$userUid/$DB_T_F/$key"] = copyFolder.toMap()
+        db.updateChildren(folderUpdates)
+                .addOnSuccessListener { callback(Result.success(copyFolder)) }
                 .addOnFailureListener { callback(Result.failure(it)) }
     }
 
     override fun writeCandidateInDatabase(candidate: Candidate, callback: (Result<Candidate>) -> Unit) {
-        val key = db.child(DB_T_C).push().key
-        key ?: return
+        val date = dateFormat.format(Date())
+        val table = "/$DB_T_U/$userUid/$date/$DB_T_C"
+        when {
+            candidate.remoteUid.isEmpty() -> {
+                val key = db.child(table).push().key
+                when (key) {
+                    null -> callback(Result.failure(IllegalArgumentException("Не удалось создать ключ для $candidate")))
+                    else -> updateCandidate(key, table, candidate, callback)
+                }
+            }
+            else -> updateCandidate(candidate.remoteUid, table, candidate, callback)
+        }
+    }
+
+    private fun updateCandidate(key: String, table: String, candidate: Candidate, callback: (Result<Candidate>) -> Unit) {
         val copyCandidate = candidate.copy(remoteUid = key)
-        val childUpdates = HashMap<String, Any>()
-        childUpdates["/$DB_T_C/$key"] = copyCandidate.toMap()
-        db.updateChildren(childUpdates)
-                .addOnSuccessListener {
-                    callback(Result.success(copyCandidate))
-                }
-                .addOnFailureListener {
-                    callback(Result.failure(it))
-                }
-    }
-
-    override fun writeEventInDatabase(event: Event) {
-        val key = db.child(DB_T_E).push().key
-        key ?: return
-        val eventValue = event.copy(id = key).toMap()
-        val eventUpdates = HashMap<String, Any>()
-        val date = dateFormat.format(Date())
-        eventUpdates["/$DB_T_E/$date/$key"] = eventValue
-        db.updateChildren(eventUpdates)
-    }
-
-    override fun writeMessageInDatabase(message: Message, callback: () -> Unit) {
-        val key = db.child(DB_T_M).push().key
-        key ?: return
-        val value = message.copy(id = key).toMap()
-        val updates = HashMap<String, Any>()
-        val date = dateFormat.format(Date())
-        updates["/$DB_T_M/$date/$key"] = value
-        db.updateChildren(updates)
-                .addOnSuccessListener { callback() }
+        val candidateUpdates = HashMap<String, Any>()
+        candidateUpdates["/$table/$key"] = copyCandidate.toMap()
+        db.updateChildren(candidateUpdates)
+                .addOnSuccessListener { callback(Result.success(copyCandidate)) }
+                .addOnFailureListener { callback(Result.failure(it)) }
     }
 
     override fun writeInfoInDatabase(info: Info) {
         db.child(DB_T_I).setValue(info)
     }
 
-    override fun updateCandidate(candidate: Candidate) {
-        db.child(DB_T_C).child(candidate.remoteUid).setValue(candidate)
-    }
+    override fun writeMessage(msg: Message, callback: (Result<Message>) -> Unit) {
+        val key = db.child(DB_T_M).push().key
+        if (key == null) {
+            callback(Result.failure(IllegalArgumentException("Не удалось создать ключ для $msg")))
+            return
+        }
 
-    override fun updateCandidate(remoteUid: String?,
-                                 column: String,
-                                 value: Any,
-                                 callback: (String) -> Unit) {
-        val id = remoteUid ?: db.child(DB_T_C).push().key
-        id ?: return
-        db.child(DB_T_C)
-                .child(id)
-                .child(column)
-                .setValue(value)
-                .addOnSuccessListener { callback(String.empty()) }
-                .addOnFailureListener { callback(it.message ?: "Хуйня какая-та при обновление значения!") }
+        val msgCopy = msg.copy(id = key)
+        val msgValue = msgCopy.toMap()
+        val msgUpdates = HashMap<String, Any>()
+        val date = dateFormat.format(Date())
+        msgUpdates["/$DB_T_M/$userUid/$date/$key"] = msgValue
+        db.updateChildren(msgUpdates)
+                .addOnSuccessListener { callback(Result.success(msgCopy)) }
+                .addOnFailureListener { callback(Result.failure(it)) }
     }
-
-    private val dateFormat by lazy { SimpleDateFormat("MMM d, yyyy", Locale.US) }
 
     override fun userUid(): String = userUid
 }

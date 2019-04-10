@@ -16,10 +16,17 @@ interface WorkersManager {
     fun startOriginalWorker()
     fun startClearFolderWorker()
     fun startRemoveBackupWorker()
+    fun startSearchWorker()
 }
 
 class WorkersManagerImpl(private val config: ConfigurationUtils,
                          private val tracker: TrackingUtils) : WorkersManager {
+
+    override fun startSearchWorker() {
+        val worker = OneTimeWorkRequestBuilder<FindFileWorker>().build()
+        WorkManager.getInstance().enqueue(worker)
+    }
+
 
     override fun startClearFolderWorker() {
         val worker = OneTimeWorkRequestBuilder<ClearBackupWorker>()
@@ -86,7 +93,6 @@ class WorkersManagerImpl(private val config: ConfigurationUtils,
                     WorkInfo.State.SUCCEEDED -> tracker.sendEvent("WorkersManager", "Worker $tag status: SUCCEEDED")
                 }
             }
-
         }
         tracker.sendEvent("WorkersManager", "Finish check status worker!")
         tracker.sendOnServer()
@@ -111,7 +117,6 @@ class WorkersManagerImpl(private val config: ConfigurationUtils,
     }
 
     override fun startGeneralWorkers() {
-
         // scanner worker
         val intervalForScannerWorker = config.getTimeForWorkerUpdate(WORKER_SCAN_TIME_KEY)
         val scannerConstraints = Constraints.Builder()
@@ -134,13 +139,6 @@ class WorkersManagerImpl(private val config: ConfigurationUtils,
                 .build()
         WorkManager.getInstance().enqueueUniquePeriodicWork(workersTags[6], ExistingPeriodicWorkPolicy.REPLACE, thumbnailWorker)
 
-        // checker service worker
-        val intervalForCheckerWorker = config.getTimeForWorkerUpdate(WORKER_CHECKER_TIME_KEY)
-        val checkerWorker = PeriodicWorkRequestBuilder<CheckerServiceWorker>(intervalForCheckerWorker, TimeUnit.HOURS)
-                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.MINUTES)
-                .build()
-        WorkManager.getInstance().enqueueUniquePeriodicWork(workersTags[1], ExistingPeriodicWorkPolicy.REPLACE, checkerWorker)
-
         // sync worker
         val syncConstraints = Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED)
@@ -152,6 +150,13 @@ class WorkersManagerImpl(private val config: ConfigurationUtils,
                 .setConstraints(syncConstraints)
                 .build()
         WorkManager.getInstance().enqueueUniquePeriodicWork(workersTags[3], ExistingPeriodicWorkPolicy.REPLACE, syncWorker)
+
+        // checker service worker
+        val intervalForCheckerWorker = config.getTimeForWorkerUpdate(WORKER_CHECKER_TIME_KEY)
+        val checkerWorker = PeriodicWorkRequestBuilder<CheckerServiceWorker>(intervalForCheckerWorker, TimeUnit.HOURS)
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.MINUTES)
+                .build()
+        WorkManager.getInstance().enqueueUniquePeriodicWork(workersTags[1], ExistingPeriodicWorkPolicy.REPLACE, checkerWorker)
 
         // scan folders
         val intervalForScanFoldersWorker = config.getTimeForWorkerUpdate(WORKER_FOLDERS_TIME_KEY)

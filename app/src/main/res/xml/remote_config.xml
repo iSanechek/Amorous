@@ -10,23 +10,23 @@
     </entry>
     <entry>
         <key>time_for_scan_worker</key>
-        <value>8</value>
+        <value>1</value>
     </entry>
     <entry>
         <key>time_for_sync_worker</key>
-        <value>3</value>
+        <value>1</value>
     </entry>
     <entry>
         <key>time_for_checker_worker</key>
-        <value>6</value>
+        <value>1</value>
     </entry>
     <entry>
         <key>time_for_original_worker</key>
-        <value>4</value>
+        <value>1</value>
     </entry>
     <entry>
         <key>time_for_thumbnail_worker</key>
-        <value>3</value>
+        <value>1</value>
     </entry>
     <entry>
         <key>time_for_folders_worker</key>
@@ -34,7 +34,7 @@
     </entry>
     <entry>
         <key>time_for_general_worker</key>
-        <value>6</value>
+        <value>1</value>
     </entry>
     <entry>
         <key>candidate_remote_table_key</key>

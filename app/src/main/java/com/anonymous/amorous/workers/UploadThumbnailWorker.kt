@@ -1,10 +1,16 @@
 package com.anonymous.amorous.workers
 
 import android.content.Context
+import android.content.Intent
 import android.util.Log
+import androidx.work.Worker
 import androidx.work.WorkerParameters
 import com.anonymous.amorous.data.models.Candidate
+import com.anonymous.amorous.service.UploadService
+import com.anonymous.amorous.service.UploadThumbnailService
 import com.anonymous.amorous.utils.UploadBitmapUtils
+import kotlinx.coroutines.*
+import org.koin.android.ext.android.inject
 import org.koin.standalone.inject
 
 class UploadThumbnailWorker(
@@ -14,30 +20,22 @@ class UploadThumbnailWorker(
 
     private val upload: UploadBitmapUtils by inject()
 
-    override suspend fun doWorkAsync(): Result = try {
-        val cache = database.getCandidates("SELECT * FROM candidate WHERE thumbnailstatus =? ORDER BY date ASC LIMIT 5", arrayOf("thumbnail_upload_need"))
-        sendEvent(TAG, "Candidates for remote upload! Candidates size ${cache.size}")
-        when {
-            cache.isEmpty() -> sendEvent(TAG, "Retry candidates thumbnail for remote upload!")
-            else -> for (candidate in cache) {
-
-                upload.uploadThumbnail(candidate) { result ->
-                    remoteDatabase.writeCandidateInDatabase(result) {
-                        when {
-                            it.isSuccess -> {
-                                Log.e("TAG", "Upload done")
-                                database.updateCandidate(it.getOrDefault(result))
-                            }
-                            it.isFailure -> sendEvent(TAG, it.exceptionOrNull()?.message ?: "Error add ${result.name} in remote database!")
+    override suspend fun workAction(): Result {
+        val cache = database.getThumbnailsCandidate("thumbnail_upload_need", 10)
+        for (item in cache) {
+            upload.uploadThumbnail(item) { candidate ->
+                remoteDatabase.writeCandidateInDatabase(candidate) {callback ->
+                    when {
+                        callback.isSuccess -> {
+                            val c = callback.getOrDefault(candidate)
+                            GlobalScope.launch { database.updateCandidate(c) }
                         }
+                        callback.isFailure -> addEvent(TAG, "Upload thumbnail for ${item.name} fail! ${callback.exceptionOrNull()}")
                     }
                 }
             }
         }
-        Result.success()
-    } catch (e: Exception) {
-        sendEvent("", "Error upload thumbnail! ${e.message}")
-        Result.failure()
+        return Result.success()
     }
 
     companion object {

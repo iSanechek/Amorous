@@ -16,6 +16,7 @@ import com.anonymous.amorous.BuildConfig
 import com.anonymous.amorous.data.database.LocalDatabase
 import com.anonymous.amorous.data.models.Candidate
 import com.anonymous.amorous.debug.logDebug
+import com.anonymous.amorous.toUid
 import com.anonymous.amorous.utils.FileUtils
 import com.anonymous.amorous.utils.TrackingUtils
 import kotlinx.coroutines.*
@@ -80,18 +81,14 @@ class JobSchedulerService : JobSchContract, JobService() {
                                                             name = fileName
                                                     ).await()
                                                 } catch (e: Exception) {
-                                                    logDebug {
-                                                        "Error for $fileName \n" +
-                                                                "${e.message}"
-                                                    }
+                                                    addEvent("Error for $fileName ${e.message}")
                                                     jobsCache[fileName]?.cancel()
                                                 }
                                             }
                                         }
                                     }
                                 } catch (e: SecurityException) {
-                                    tracker.sendEvent(TAG, "Error: no access to media! ${e.message}")
-                                    tracker.sendOnServer()
+                                    addEvent("Error: no access to media! ${e.message}")
                                 } finally {
                                     cursor?.close()
                                 }
@@ -124,6 +121,7 @@ class JobSchedulerService : JobSchContract, JobService() {
                 builder.setTriggerContentMaxDelay(500)
                 jobInfo = builder.build()
                 jobInfo?.let {
+                    addEvent("Service schedule!")
                     bindService(context).schedule(it)
                 }
             }
@@ -140,6 +138,7 @@ class JobSchedulerService : JobSchContract, JobService() {
         for (i in 0 until jobs.size) {
             if (jobs[i].id == CHECKER_SERVICE_JOB_ID) isRunning = true
         }
+        addEvent("Check service run $isRunning")
         return isRunning
     }
 
@@ -150,9 +149,10 @@ class JobSchedulerService : JobSchContract, JobService() {
         async {
             if (fileUtils.checkCreatedCacheFolder(this@JobSchedulerService)) {
                 val tempPath = fileUtils.copyToCacheFolder(this@JobSchedulerService, dir)
+                addEvent("Copy file done! $tempPath")
                 database.saveCandidate(
                         Candidate(
-                                uid = name.hashCode(),
+                                uid = name.toUid(),
                                 name = name,
                                 thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_NEED,
                                 tempPath = tempPath,
@@ -168,6 +168,10 @@ class JobSchedulerService : JobSchContract, JobService() {
     }
 
     private fun bindService(context: Context): JobScheduler = context.getSystemService(JobScheduler::class.java) as JobScheduler
+
+    private fun addEvent(event: String) {
+        tracker.sendEvent(TAG, event)
+    }
 
     companion object {
         private const val TAG = "JobSchedulerService"
