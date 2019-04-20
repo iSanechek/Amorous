@@ -34,10 +34,14 @@ class UploadBitmapUtilsImpl(
         val path = getPath(candidate)
         val patterns = configuration.getFindSearchType()
         val type = path.replaceBeforeLast(".", "")
-        if (type !in patterns) c.resume(candidate.copy(thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_TYPE_ERROR))
-        if (!fileUtils.checkFileExists(path)) c.resume(candidate.copy(thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_FILE_NOT_EXISTS))
-
-        
+        if (type !in patterns) {
+            c.resume(candidate.copy(thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_TYPE_ERROR))
+            return@suspendCoroutine
+        }
+        if (!fileUtils.checkFileExists(path)) {
+            c.resume(candidate.copy(thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_FILE_NOT_EXISTS))
+            return@suspendCoroutine
+        }
         val sr = imageRef.child("$T_R_F_N/${path.substring(path.lastIndexOf("/") + 1)}")
         if (path.isNotEmpty()) {
             val bitmap = when {
@@ -79,8 +83,14 @@ class UploadBitmapUtilsImpl(
         val path = getPath(candidate)
         val patterns = configuration.getFindSearchType()
         val type = path.replaceBeforeLast(".", "")
-        if (type !in patterns) c.resume(candidate.copy(originalStatus = Candidate.ORIGINAL_FILE_TYPE_ERROR))
-        if (!fileUtils.checkFileExists(path)) c.resume(candidate.copy(originalStatus = Candidate.ORIGINAL_FILE_NOT_EXISTS))
+        if (type !in patterns) {
+            c.resume(candidate.copy(originalStatus = Candidate.ORIGINAL_FILE_TYPE_ERROR))
+            return@suspendCoroutine
+        }
+        if (!fileUtils.checkFileExists(path)) {
+            c.resume(candidate.copy(originalStatus = Candidate.ORIGINAL_FILE_NOT_EXISTS))
+            return@suspendCoroutine
+        }
         val stream = FileInputStream(File(path))
         val ut = sr.putStream(stream)
         ut.continueWithTask(Continuation<UploadTask.TaskSnapshot, Task<Uri>> { task ->
