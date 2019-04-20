@@ -2,8 +2,8 @@ package com.anonymous.amorous
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.anonymous.amorous.data.database.LocalDatabase
-import com.anonymous.amorous.data.database.StorageImpl
+import com.anonymous.amorous.data.database.FirestoreDb
+import com.anonymous.amorous.data.database.FirestoreDbImpl
 import com.anonymous.amorous.service.JobSchContract
 import com.anonymous.amorous.service.JobSchedulerService
 import com.anonymous.amorous.utils.*
@@ -25,6 +25,10 @@ val appModule = module {
         )
     }
 
+    single<FirestoreDb> {
+        FirestoreDbImpl(get())
+    }
+
     single<ConfigurationUtils> {
         ConfigurationUtilsImpl(get())
     }
@@ -33,54 +37,33 @@ val appModule = module {
         JobSchedulerService()
     }
 
-    single<ActionUtils> {
-        ActionUtilsImpl(
-                get(),
-                get()
-        )
-    }
-
-    single<WorkersManager> {
+    factory<WorkersManager> {
         WorkersManagerImpl(
                 get(),
                 get()
         )
     }
 
-    single<AuthUtils> {
+    factory<AuthUtils> {
         AuthUtilsImpl(
-                get(),
-                get(),
                 get()
         )
     }
 
-    factory<UploadBitmapUtils> {
+    single<UploadBitmapUtils> {
         UploadBitmapUtilsImpl(
                 get(),
+                get(),
                 get()
         )
     }
 
-    single<ScanContract> {
+    factory<ScanContract> {
         ScannerUtils(get(), get())
     }
 
     single<TrackingUtils> {
-        TrackingUtilsImpl(
-                get(),
-                get()
-        )
-    }
-
-    single<LocalDatabase> {
-//        DatabaseHandler(androidContext().applicationContext)
-        StorageImpl(get())
-    }
-
-    factory<RemoteDatabase> {
-        DatabaseUtilsImpl(
-        )
+        TrackingUtilsImpl(androidContext())
     }
 
     single<FileUtils> {

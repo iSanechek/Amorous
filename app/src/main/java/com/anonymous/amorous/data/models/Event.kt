@@ -1,11 +1,8 @@
 package com.anonymous.amorous.data.models
 
 import com.anonymous.amorous.empty
-import com.google.firebase.database.Exclude
-import com.google.firebase.database.IgnoreExtraProperties
 import java.util.*
 
-@IgnoreExtraProperties
 data class Event(
         val id: String = String.empty(),
         val title: String = String.empty(),
@@ -13,7 +10,6 @@ data class Event(
         val event: String = String.empty()
 ) {
 
-    @Exclude
     fun toMap(): Map<String, Any?> = mapOf(
             "id" to id,
             "title" to title,

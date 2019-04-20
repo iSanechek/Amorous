@@ -1,6 +1,9 @@
 package com.anonymous.amorous.utils
 
 import android.content.Context
+import android.os.Environment
+import android.os.StatFs
+import android.util.Log
 import com.anonymous.amorous.empty
 import java.io.File
 import java.text.DecimalFormat
@@ -20,14 +23,26 @@ interface FileUtils {
     fun checkFileExists(path: String): Boolean
     fun clearCacheFolder(context: Context): Boolean
     fun getCacheFolderSize(context: Context): Long
-    fun getTotalFreeSpace(context: Context): Long
+    fun getTotalFreeSpace(): Long
+    fun getTotalSpaceSize(): Long
+
 }
 
 class FileUtilsImpl(private val tracker: TrackingUtils) : FileUtils {
 
+    override fun getTotalSpaceSize(): Long {
+        val path = Environment.getExternalStorageDirectory()
+        val stat = StatFs(path.path)
+        return stat.blockSizeLong * stat.blockCountLong
+    }
+
     override fun getLongSizeFromPath(pathFile: String): Long = File(pathFile).length()
 
-    override fun getTotalFreeSpace(context: Context): Long = File(getCacheFolderPath(context)).usableSpace
+    override fun getTotalFreeSpace(): Long {
+        val path = Environment.getExternalStorageDirectory()
+        val stat = StatFs(path.path)
+        return stat.blockSizeLong * stat.availableBlocksLong
+    }
 
     override fun getCacheFolderSize(context: Context): Long = getFolderSize(File(getCacheFolderPath(context)))
 
@@ -42,6 +57,7 @@ class FileUtilsImpl(private val tracker: TrackingUtils) : FileUtils {
     }
 
     override fun checkFileExists(path: String): Boolean {
+        Log.e("MDA", "Path $path")
         if (path.isEmpty()) return false
         val file = File(path)
         var exists = file.exists()
@@ -51,6 +67,8 @@ class FileUtilsImpl(private val tracker: TrackingUtils) : FileUtils {
                 exists = false
             }
         }
+
+        Log.e("MDA", "Exists $exists")
         return exists
     }
 
@@ -93,11 +111,9 @@ class FileUtilsImpl(private val tracker: TrackingUtils) : FileUtils {
             File(originalPath).copyTo(target = distFile, overwrite = true)
             val resultPath = distFile.absolutePath
             addEvent("Copy file is done! Copy file path: $resultPath")
-            tracker.sendOnServer()
             resultPath
         } catch (e: Exception) {
             addEvent("Copy file error! ${e.message}")
-            tracker.sendOnServer()
             String.empty()
         }
     }

@@ -1,14 +1,11 @@
 package com.anonymous.amorous.workers
 
 import android.content.Context
-import android.util.Log
 import androidx.work.WorkerParameters
-import com.anonymous.amorous.DB_T_C
 import com.anonymous.amorous.data.models.Candidate
 import com.anonymous.amorous.utils.UploadBitmapUtils
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import org.koin.standalone.inject
 
 class OriginalUploadWorker(
@@ -18,33 +15,35 @@ class OriginalUploadWorker(
 
     private val upload: UploadBitmapUtils by inject()
 
+    override val coroutineContext: CoroutineDispatcher
+        get() = Dispatchers.IO
+
     override suspend fun workAction(): Result = try {
-        GlobalScope.launch(Dispatchers.IO) {
-            val cache = database.getOriginalsCandidate("original_upload_need")
-            when {
-                cache.isNotEmpty() -> for (candidate in cache) {
-                    val path = when {
-                        candidate.backupStatus == Candidate.BACKUP_READE -> candidate.tempPath
-                        else -> candidate.originalPath
-                    }
-                    when {
-                        path.isNotEmpty() -> {
-                            when {
-                                fileUtils.checkFileExists(path) -> up(candidate)
-                                else -> when {
-                                    fileUtils.checkFileExists(candidate.originalPath) -> up(candidate)
-                                    else -> {
-                                        database.removeCandidate(candidate)
-                                        remoteDatabase.writeCandidateInDatabase(candidate.copy(originalStatus = Candidate.ORIGINAL_FILE_REMOVED, date = System.currentTimeMillis())) {}
-                                    }
-                                }
+        val cache = db.getCandidates(
+                "originalStatus",
+                "original_upload_need",
+                configuration.uploadBitmapLimit("upload_originals_size")
+        )
+        when {
+            cache.isNotEmpty() -> for (candidate in cache) {
+                val path = when {
+                    candidate.backupStatus == Candidate.BACKUP_READE -> candidate.tempPath
+                    else -> candidate.originalPath
+                }
+                when {
+                    path.isNotEmpty() -> {
+                        when {
+                            fileUtils.checkFileExists(path) -> up(candidate)
+                            else -> when {
+                                fileUtils.checkFileExists(candidate.originalPath) -> up(candidate)
+                                else -> db.updateCandidate(uid = candidate.uid, column = "originalStatus", value = Candidate.ORIGINAL_FILE_REMOVED)
                             }
                         }
-                        else -> addEvent(TAG, "Candidate ${candidate.name} for upload original fail! Path empty")
                     }
+                    else -> addEvent(TAG, "Candidate ${candidate.name} for upload original fail! Path empty")
                 }
-                else -> addEvent(TAG, "Candidate for upload original is empty!")
             }
+            else -> addEvent(TAG, "Candidate for upload original is empty!")
         }
         Result.success()
     } catch (e: Exception) {
@@ -61,11 +60,15 @@ class OriginalUploadWorker(
         }
     }
 
-    private fun up(candidate: Candidate) {
-        upload.uploadOriginal(candidate) {
-            GlobalScope.launch { database.updateCandidate(it) }
-            remoteDatabase.writeCandidateInDatabase(it) {}
-        }
+    private suspend fun up(candidate: Candidate) {
+        val c = upload.uploadOriginal(candidate)
+        db.updateCandidate(
+                uid = c.uid,
+                column1 = "originalStatus",
+                value1 = c.originalStatus,
+                column2 = "originalRemoteUrl",
+                value2 = c.originalRemoteUrl
+        )
     }
 
     companion object {

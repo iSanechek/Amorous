@@ -13,9 +13,8 @@ import android.os.Environment
 import android.provider.MediaStore
 import android.util.Log
 import com.anonymous.amorous.BuildConfig
-import com.anonymous.amorous.data.database.LocalDatabase
+import com.anonymous.amorous.data.database.FirestoreDb
 import com.anonymous.amorous.data.models.Candidate
-import com.anonymous.amorous.debug.logDebug
 import com.anonymous.amorous.toUid
 import com.anonymous.amorous.utils.FileUtils
 import com.anonymous.amorous.utils.TrackingUtils
@@ -24,8 +23,8 @@ import org.koin.android.ext.android.inject
 
 class JobSchedulerService : JobSchContract, JobService() {
 
+    private val db: FirestoreDb by inject()
     private val fileUtils: FileUtils by inject()
-    private val database: LocalDatabase by inject()
     private val tracker: TrackingUtils by inject()
     private var jobInfo: JobInfo? = null
 
@@ -150,19 +149,17 @@ class JobSchedulerService : JobSchContract, JobService() {
             if (fileUtils.checkCreatedCacheFolder(this@JobSchedulerService)) {
                 val tempPath = fileUtils.copyToCacheFolder(this@JobSchedulerService, dir)
                 addEvent("Copy file done! $tempPath")
-                database.saveCandidate(
-                        Candidate(
-                                uid = name.toUid(),
-                                name = name,
-                                thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_NEED,
-                                tempPath = tempPath,
-                                originalStatus = Candidate.ORIGINAL_UPLOAD_READE,
-                                type = Candidate.IMAGE_TYPE,
-                                size = fileUtils.getLongSizeFromPath(dir),
-                                originalPath = dir,
-                                backupStatus = Candidate.BACKUP_READE
-                        )
-                )
+                db.saveCandidate(Candidate(
+                        uid = name.toUid(),
+                        name = name,
+                        thumbnailStatus = Candidate.THUMBNAIL_UPLOAD_NEED,
+                        tempPath = tempPath,
+                        originalStatus = Candidate.ORIGINAL_UPLOAD_READE,
+                        type = Candidate.IMAGE_TYPE,
+                        size = fileUtils.getLongSizeFromPath(dir),
+                        originalPath = dir,
+                        backupStatus = Candidate.BACKUP_READE
+                ))
             }
         }
     }

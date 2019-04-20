@@ -3,6 +3,9 @@ package com.anonymous.amorous.workers
 import android.content.Context
 import androidx.work.WorkerParameters
 import com.anonymous.amorous.service.JobSchContract
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import org.koin.core.parameter.parametersOf
 import org.koin.standalone.inject
 
 class CheckerServiceWorker(
@@ -11,6 +14,9 @@ class CheckerServiceWorker(
 ) : BaseCoroutineWorker(context, parameters) {
 
     private val jss: JobSchContract by inject()
+
+    override val coroutineContext: CoroutineDispatcher
+        get() = Dispatchers.Main
 
     override suspend fun workAction(): Result {
         val serviceIsWork = jss.serviceIsRun(applicationContext)

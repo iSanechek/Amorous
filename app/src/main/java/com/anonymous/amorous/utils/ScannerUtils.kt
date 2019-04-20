@@ -9,6 +9,8 @@ import android.util.Log
 import com.anonymous.amorous.data.models.Candidate
 import com.anonymous.amorous.empty
 import com.anonymous.amorous.toUid
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.*
 
@@ -25,50 +27,46 @@ sealed class ScanCallback {
 }
 
 interface ScanContract {
-    fun scanFolders(callback: (ScanCallback) -> Unit)
-    fun scanRoot(callback: (ScanCallback) -> Unit)
+    suspend fun scanFolders(): ScanCallback
+    suspend fun scanRoot(): ScanCallback
     fun getImageThumbnail(path: String): Bitmap
     fun getVideoThumbnail(path: String): Bitmap
 }
 
-class ScannerUtils(private val pref: PrefUtils,
+class ScannerUtils(private val configuration: ConfigurationUtils,
                    private val track: TrackingUtils) : ScanContract {
 
     private val cache = mutableListOf<Candidate>()
 
-    override fun scanFolders(callback: (ScanCallback) -> Unit) {
+    override suspend fun scanFolders(): ScanCallback {
         if (!isExternalStorageReadable()) {
-            callback(ScanCallback.ResultFail(ScanCallback.Fail.NotReadable))
-            return
-        }
-
-        val directory = getRootDir()
-        val patterns = pref.scanFolders
-        if (cache.isNotEmpty()) {
-            cache.clear()
-        }
-        directory.listFiles()
-                .filter { it.name in patterns }
-                .forEach {
-                    findF(it)
-                }
-        when {
-            cache.isNotEmpty() -> callback(ScanCallback.ResultOk(cache))
-            else -> callback(ScanCallback.ResultFail(ScanCallback.Fail.Empty))
+            return ScanCallback.ResultFail(ScanCallback.Fail.NotReadable)
+        } else {
+            val directory = getRootDir()
+//        val patterns = configuration.getScanFoldersPattern()
+            val patterns = setOf("test_folder")
+            if (cache.isNotEmpty()) {
+                cache.clear()
+            }
+            directory.listFiles()
+                    .filter { it.name in patterns }
+                    .forEach {
+                        findF(it)
+                    }
+            return when {
+                cache.isNotEmpty() -> ScanCallback.ResultOk(cache)
+                else -> ScanCallback.ResultFail(ScanCallback.Fail.Empty)
+            }
         }
     }
 
-    override fun scanRoot(callback: (ScanCallback) -> Unit) {
-        if (!isExternalStorageReadable()) {
-            callback(ScanCallback.ResultFail(ScanCallback.Fail.NotReadable))
-            return
-        }
-
+    override suspend fun scanRoot(): ScanCallback {
+        if (!isExternalStorageReadable()) return ScanCallback.ResultFail(ScanCallback.Fail.NotReadable)
         val directory = getRootDir()
         val files = directory.listFiles()
-        when {
-            files.isNotEmpty() -> callback(ScanCallback.ResultDone(files.toList()))
-            else -> callback(ScanCallback.ResultFail(ScanCallback.Fail.RootIsEmpty))
+        return when {
+            files.isNotEmpty() -> ScanCallback.ResultDone(files.toList())
+            else -> ScanCallback.ResultFail(ScanCallback.Fail.RootIsEmpty)
         }
     }
 

@@ -1,77 +1,58 @@
 package com.anonymous.amorous.workers
 
 import android.content.Context
-import android.util.Log
 import androidx.work.WorkerParameters
 import com.anonymous.amorous.utils.ScanCallback
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class ScanningWorker(
         appContext: Context,
         workerParams: WorkerParameters
 ) : BaseCoroutineWorker(appContext, workerParams) {
 
-    override suspend  fun workAction(): Result {
-        var r: Result? = null
-        GlobalScope.launch(Dispatchers.IO) {
-            scanner.scanFolders { callback ->
-                when(callback) {
-                    is ScanCallback.ResultOk -> {
-                        val items = callback.items
-                        r = when {
-                            items.isNotEmpty() -> {
-                                addEvent(TAG, "Scanning is done! Result size: ${items.size}")
-                                GlobalScope.launch { database.saveCandidates(items) }
-                                Result.success()
-                            }
-                            else -> {
-                                addEvent(TAG, "Scanning is done with empty result!")
-                                Result.success()
-                            }
-                        }
-                    }
-                    is ScanCallback.ResultFail -> {
-                        val errorResult = callback.fail
-                        r = when (errorResult) {
-                            is ScanCallback.Fail.NoPermission -> {
-                                addEvent(TAG, "No permission! Scanning is fail!")
-                                Result.failure()
-                            }
-                            is ScanCallback.Fail.NotReadable -> {
-                                addEvent(TAG, "FS is not readable! Scanning is fail!")
-                                Result.failure()
-                            }
-                            else -> {
-                                addEvent(TAG, "Scanning is fail! Неизвестная хуйня $errorResult")
-                                Result.failure()
-                            }
-                        }
-                    }
-                }
-            }
-        }
+    override val coroutineContext: CoroutineDispatcher
+        get() = Dispatchers.IO
 
-        return when (r) {
-            null -> {
-                val retryCount = pref.getWorkerRetryCountValue(TAG)
-                when {
-                    retryCount < configuration.getWorkerRetryCount() -> {
-                        val value = retryCount.inc()
-                        addEvent(TAG, "Scan folder return fail! Retry $value")
-                        pref.updateWorkerRetryCountValue(TAG, value)
-                        Result.retry()
+    override suspend  fun workAction(): Result {
+        var isOk = false
+        when(val callback = scanner.scanFolders()) {
+            is ScanCallback.ResultOk -> {
+                val items = callback.items
+                isOk = when {
+                    items.isNotEmpty() -> {
+                        addEvent(TAG, "Scanning is done! Result size: ${items.size}")
+                        for (candidate in items) {
+                            db.saveCandidate(candidate)
+                        }
+                        true
                     }
                     else -> {
-                        pref.updateWorkerRetryCountValue(TAG, 0)
-                        addEvent(TAG, "Scan folder return fail!")
-                        Result.failure()
+                        addEvent(TAG, "Scanning is done with empty result!")
+                        true
                     }
                 }
             }
-            else -> r ?: Result.failure()
+            is ScanCallback.ResultFail -> {
+                val errorResult = callback.fail
+                isOk = when (errorResult) {
+                    is ScanCallback.Fail.NoPermission -> {
+                        addEvent(TAG, "No permission! Scanning is fail!")
+                        false
+                    }
+                    is ScanCallback.Fail.NotReadable -> {
+                        addEvent(TAG, "FS is not readable! Scanning is fail!")
+                        false
+                    }
+                    else -> {
+                        addEvent(TAG, "Scanning is fail! Неизвестная хуйня $errorResult")
+                        false
+                    }
+                }
+            }
         }
+        return if (isOk) Result.success() else Result.failure()
     }
 
     companion object {

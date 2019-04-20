@@ -1,75 +1,46 @@
 package com.anonymous.amorous.utils
 
-import android.util.Log
-import com.anonymous.amorous.DB_T_U
 import com.anonymous.amorous.data.models.User
+import com.anonymous.amorous.empty
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.FirebaseUser
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.ValueEventListener
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
-sealed class AuthCallBack {
-    data class AuthOk(val user: FirebaseUser?) : AuthCallBack()
-    data class AuthError(val errorMessage: String) : AuthCallBack()
-    object NeedAuth : AuthCallBack()
-}
 interface AuthUtils {
-    fun checkAuthState(callback: (AuthCallBack) -> Unit)
-    fun startAuth(callback: (AuthCallBack) -> Unit)
+    suspend fun isAuth(): Boolean
+    suspend fun auth(u: User): User
 }
+
 class AuthUtilsImpl(
-        private val db: RemoteDatabase,
-        private val config: ConfigurationUtils,
         private val tracker: TrackingUtils
 ) : AuthUtils {
 
+    private val authInstance by lazy { FirebaseAuth.getInstance() }
 
-    override fun checkAuthState(callback: (AuthCallBack) -> Unit) {
-        val user = FirebaseAuth.getInstance().currentUser
-        if (user != null) callback(AuthCallBack.AuthOk(user)) else callback(AuthCallBack.NeedAuth)
-    }
-
-    override fun startAuth(callback: (AuthCallBack) -> Unit) {
-        val auth = FirebaseAuth.getInstance()
-        val userData = config.getUserData()
-        auth.signInWithEmailAndPassword(userData.first, userData.second)
-                .addOnCompleteListener {
-                    if (it.isSuccessful) {
-                        val user = auth.currentUser
-                        if (user != null) {
-                            db.getDatabase()
-                                    .child(DB_T_U)
-                                    .child(user.uid)
-                                    .addListenerForSingleValueEvent(object: ValueEventListener {
-                                        override fun onCancelled(p0: DatabaseError) {
-                                            addEvent("User onCancelled ${p0.toException()}")
-                                            callback(AuthCallBack.AuthError(p0.toException().message ?: ""))
-                                        }
-
-                                        override fun onDataChange(p0: DataSnapshot) {
-                                            val u = p0.getValue(User::class.java)
-                                            when (u) {
-                                                null -> {
-                                                    val newUser = User(user.uid, user.email
-                                                            ?: "Fuck")
-                                                    addEvent("Create new user $newUser")
-                                                    db.createNewUser(user.uid, newUser)
-                                                    callback(AuthCallBack.AuthOk(auth.currentUser))
-                                                }
-                                                else -> {
-                                                    addEvent("Юзер уже есть в таблице")
-                                                    callback(AuthCallBack.AuthOk(auth.currentUser))
-                                                }
-                                            }
-                                        }
-                                    })
+    override suspend fun auth(u: User): User = suspendCoroutine { c ->
+        val e = u.email ?: String.empty()
+        val p = u.message ?: String.empty()
+        addEvent("User data $e -- $p")
+        authInstance.signInWithEmailAndPassword(e, p)
+                .addOnCompleteListener { task ->
+                    when {
+                        task.isSuccessful -> {
+                            val user = task.result?.user
+                            addEvent("Auth is done! $user")
+                            c.resume(User(uid = user?.uid, email = user?.email, timeAuth = System.currentTimeMillis()))
                         }
+                        else -> c.resume(User())
                     }
                 }.addOnFailureListener {
-                    addEvent("Auth failure ${it.message}")
-                    callback(AuthCallBack.AuthError(it.message ?: ""))
+                    addEvent("Event fail! Error ${it.message ?: "Какое-то говно"}")
+                    c.resume(User())
                 }
+    }
+
+    override suspend fun isAuth(): Boolean = withContext(Dispatchers.IO) {
+        authInstance.currentUser != null
     }
 
     private fun addEvent(msg: String) {

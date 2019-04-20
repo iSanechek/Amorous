@@ -1,50 +1,67 @@
 package com.anonymous.amorous.debug
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.WorkerParameters
 import com.anonymous.amorous.R
-import com.anonymous.amorous.data.database.LocalDatabase
+import com.anonymous.amorous.data.database.FirestoreDb
 import com.anonymous.amorous.service.AmorousService
-import com.anonymous.amorous.utils.*
+import com.anonymous.amorous.utils.FileUtils
+import com.anonymous.amorous.utils.WorkersManager
+import com.anonymous.amorous.workers.BaseCoroutineWorker
+import com.anonymous.amorous.workers.ScanFolderWorker
+import com.anonymous.amorous.workers.SyncWorker
+import com.google.android.gms.tasks.OnCompleteListener
+import com.google.firebase.iid.FirebaseInstanceId
 import kotlinx.android.synthetic.main.debug_layout.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 
 class DebugActivity : AppCompatActivity() {
 
-    private val db: LocalDatabase by inject()
     private val files: FileUtils by inject()
+    private val manager: WorkersManager by inject()
+    private val f: FirestoreDb by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.debug_layout)
+       testStartService()
 
-        GlobalScope.launch(Dispatchers.IO) {
-            try {
 
-                val error = db.getThumbnailsCandidate("thumbnail_upload_fail", 100)
-                val back = db.getThumbnailsCandidate("original_reade_backup", 100)
-                val done = db.getThumbnailsCandidate("thumbnail_upload_done", 100)
 
-                log("Done size ${done.size}")
-                log("Error size ${error.size}")
-                log("Backup size ${back.size}")
+//        val testWorker = PeriodicWorkRequestBuilder<DebugWorker>(15, TimeUnit.MINUTES).build()
+//        WorkManager.getInstance().enqueueUniquePeriodicWork("debug_worker", ExistingPeriodicWorkPolicy.REPLACE, testWorker)
 
-            } catch (e: Exception) {
 
-            }
-        }
 
-        val items = files.getAllFilesFromCacheFolder(this)
-        log("Size ${items.size}")
+
+//        val items = files.getAllFilesFromCacheFolder(this)
+//        log("Size ${items.size}")
 
         debug_start.setOnClickListener {
+            log("Boom")
 
-            startService(Intent(this@DebugActivity, AmorousService::class.java))
+            val t = OneTimeWorkRequestBuilder<ScanFolderWorker>().build()
+            WorkManager.getInstance().enqueue(t)
+
+//            FirebaseInstanceId.getInstance().instanceId
+//                    .addOnCompleteListener(OnCompleteListener { task ->
+//                        if (!task.isSuccessful) {
+//                            log("Erro ${task.exception}")
+//                            return@OnCompleteListener
+//                        }
+//
+//                        // Get new Instance ID token
+//                        val token = task.result?.token
+//
+//                        // Log and toast
+//                        log(token)
+//                    })
 
         }
     }

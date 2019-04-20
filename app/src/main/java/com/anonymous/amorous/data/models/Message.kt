@@ -1,13 +1,8 @@
 package com.anonymous.amorous.data.models
 
-import com.google.firebase.database.Exclude
-import com.google.firebase.database.IgnoreExtraProperties
+import com.anonymous.amorous.empty
 
-@IgnoreExtraProperties
-data class Message(val id: String, val message: String) {
+data class Message(val userKey: String = String.empty(), val message: String = String.empty(), val lastTimeUpdate: Long = 0L) {
 
-    @Exclude
-    fun toMap(): Map<String, Any?> = mapOf(
-            "id" to id,
-            "message" to message)
+    fun toMap() = mapOf("userKey" to userKey, "message" to message, "lastTimeUpdate" to lastTimeUpdate)
 }

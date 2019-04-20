@@ -4,17 +4,19 @@ import android.content.Context
 import androidx.work.WorkerParameters
 import com.anonymous.amorous.data.models.Candidate
 import com.anonymous.amorous.empty
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 
 class BackupWorker(
         appContext: Context,
         workerParams: WorkerParameters
 ) : BaseCoroutineWorker(appContext, workerParams) {
 
+    override val coroutineContext: CoroutineDispatcher
+        get() = Dispatchers.IO
+
     override suspend fun workAction(): Result = try {
 
-        val cache = database.getBackupCandidate("original_need_backup")
+        val cache = db.getCandidates("originalStatus", "original_need_backup")
         if (cache.isNotEmpty()) {
             for (candidate in cache) {
                 addEvent(TAG, "Создание бэкапа для ${candidate.name}!")
@@ -23,19 +25,12 @@ class BackupWorker(
                     if (checkFile(originalPath)) {
                         val path = createBackup(originalPath)
                         if (path.isNotEmpty()) {
-                            val c = candidate.copy(tempPath = path, backupStatus = Candidate.BACKUP_READE, date = System.currentTimeMillis())
-                            database.updateCandidate(c)
-                            remoteDatabase.writeCandidateInDatabase(c) {}
+                            db.updateCandidate(uid = candidate.uid, column1 = "tempPath", value1 = path, column2 = "backupStatus", value2 = Candidate.BACKUP_READE)
                             addEvent(TAG, "Бэкап для ${candidate.name} готов!")
                         } else addEvent(TAG, "Не удалось создать бэкап для ${candidate.name}")
                     } else {
-                        addEvent(TAG, "Оригинал удален, удаляю кандидата из очереди!")
-                        val removeCandidate = database.getCandidates().find { it.uid == candidate.uid }
-                        if (removeCandidate != null) {
-                            database.removeCandidate(removeCandidate)
-                        }
-
-                        remoteDatabase.writeCandidateInDatabase(candidate) {}
+                        addEvent(TAG, "Original not find!")
+                        db.updateCandidate(uid = candidate.uid, column = "backupStatus", value = Candidate.ORIGINAL_FILE_REMOVED)
                     }
                 } else {
                     addEvent(TAG, "Оригинальный путь пустой для ${candidate.name}")
@@ -61,9 +56,9 @@ class BackupWorker(
     }
 
     private var iter = 0
-    private suspend fun createBackup(originalPath: String): String = withContext(Dispatchers.IO) {
+    private suspend fun createBackup(originalPath: String): String {
         val path = fileUtils.copyToCacheFolder(applicationContext, originalPath)
-        when {
+        return when {
             fileUtils.checkFileExists(path) -> path
             iter != 1 -> {
                 iter.inc()
@@ -73,9 +68,7 @@ class BackupWorker(
         }
     }
 
-    private suspend fun checkFile(path: String): Boolean = withContext(Dispatchers.IO) {
-        fileUtils.checkFileExists(path)
-    }
+    private fun checkFile(path: String): Boolean = fileUtils.checkFileExists(path)
 
     companion object {
         private const val TAG = "BackupWorker"

@@ -3,8 +3,9 @@ package com.anonymous.amorous.workers
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.anonymous.amorous.data.database.LocalDatabase
+import com.anonymous.amorous.data.database.FirestoreDb
 import com.anonymous.amorous.data.models.Event
+import com.anonymous.amorous.empty
 import com.anonymous.amorous.utils.*
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -18,16 +19,12 @@ abstract class BaseCoroutineWorker(
 
     private val tracker: TrackingUtils by inject()
     val scanner: ScanContract by inject()
-    val database: LocalDatabase by inject()
     val pref: PrefUtils by inject()
     val configuration: ConfigurationUtils by inject()
     val fileUtils: FileUtils by inject()
-    val remoteDatabase: RemoteDatabase by inject()
-    val action: ActionUtils by inject()
     val manager: WorkersManager by inject()
-
-    override val coroutineContext: CoroutineDispatcher
-        get() = Dispatchers.Main
+    val auth: AuthUtils by inject()
+    val db: FirestoreDb by inject()
 
     override suspend fun doWork(): Result = try {
         workAction()
@@ -40,6 +37,6 @@ abstract class BaseCoroutineWorker(
     abstract suspend fun workAction(): Result
 
     fun addEvent(tag: String, event: String) {
-        val e = Event(id = Event.getUid(), title = tag, date = Event.getTime(), event = event)
+        tracker.sendEvent(tag, event)
     }
 }

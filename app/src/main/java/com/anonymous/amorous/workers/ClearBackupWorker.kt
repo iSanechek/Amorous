@@ -2,6 +2,7 @@ package com.anonymous.amorous.workers
 
 import android.content.Context
 import androidx.work.WorkerParameters
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -10,17 +11,16 @@ class ClearBackupWorker(
         workerParams: WorkerParameters
 ) : BaseCoroutineWorker(appContext, workerParams) {
 
+    override val coroutineContext: CoroutineDispatcher
+        get() = Dispatchers.IO
+
     override suspend fun workAction(): Result = try {
         addEvent(TAG, "Start remove all data! :(")
         when {
             getFolderSize() > 0L -> when {
                 clearFolder() -> {
-                    val size = getFolderSize()
-                    when (size) {
-                        0L -> {
-                            addEvent(TAG, "Clear cache folder done!")
-                            clearDatabase()
-                        }
+                    when (val size = getFolderSize()) {
+                        0L -> addEvent(TAG, "Clear cache folder done!")
                         else -> addEvent(TAG, "Clear cache folder fail! Size folder $size")
                     }
                 }
@@ -43,17 +43,9 @@ class ClearBackupWorker(
         }
     }
 
-    private suspend fun getFolderSize(): Long = withContext(Dispatchers.IO) {
-        fileUtils.getCacheFolderSize(applicationContext)
-    }
+    private fun getFolderSize(): Long = fileUtils.getCacheFolderSize(applicationContext)
 
-    private suspend fun clearFolder(): Boolean = withContext(Dispatchers.IO) {
-        fileUtils.clearCacheFolder(applicationContext)
-    }
-
-    private suspend fun clearDatabase() = withContext(Dispatchers.IO) {
-        fileUtils.clearCacheFolder(applicationContext)
-    }
+    private fun clearFolder(): Boolean = fileUtils.clearCacheFolder(applicationContext)
 
     companion object {
         private const val TAG = "ClearBackupWorker"

@@ -1,6 +1,5 @@
 package com.anonymous.amorous.utils
 
-import android.util.Log
 import com.anonymous.amorous.*
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
@@ -10,11 +9,12 @@ interface ConfigurationUtils {
     fun getStartJobsServiceStatus(): Boolean
     fun getTimeForWorkerUpdate(workerKey: String): Long
     fun getCandidatesTable(): String
-    fun getUserData(): Pair<String, String>
     fun getWorkerStatus(): Boolean
     fun removeAllData(): Boolean
-    fun disableOfflineDatabase(): Boolean
     fun disableTracking(): Boolean
+    fun uploadBitmapLimit(key: String): Long
+    fun getFindSearchType(): List<String>
+    fun getScanFoldersPattern(): List<String>
 }
 
 class ConfigurationUtilsImpl(private val tracker: TrackingUtils) : ConfigurationUtils {
@@ -27,13 +27,13 @@ class ConfigurationUtilsImpl(private val tracker: TrackingUtils) : Configuration
                 .build()
         config.setConfigSettings(setting)
         config.setDefaults(R.xml.remote_config)
-        config.fetch()
+        config.fetchAndActivate()
                 .addOnFailureListener {
                     sendEvent("Update configuration error! ${it.message}")
                 }.addOnCompleteListener {
-                    if (it.isSuccessful) {
-                        config.activateFetched()
-                        sendEvent("Configure update!")
+                    when {
+                        it.isSuccessful -> sendEvent("Configure update!")
+                        else -> sendEvent("Configure update!")
                     }
                 }
     }
@@ -46,30 +46,19 @@ class ConfigurationUtilsImpl(private val tracker: TrackingUtils) : Configuration
 
     override fun getCandidatesTable(): String = config.getString(CANDIDATE_REMOTE_TABLE_KEY)
 
-    override fun getUserData(): Pair<String, String> {
-        var email = config.getString("user_email_key")
-        var username = config.getString("user_username_key")
-        if (email.isEmpty()) {
-            email = "devuicore@gmail.com"
-        }
-        if (username.isEmpty()) {
-            username = "nf7761513"
-        }
-
-        return Pair(email, username)
-    }
-
     override fun getWorkerStatus(): Boolean = config.getBoolean("all_worker_status")
 
     override fun removeAllData(): Boolean = config.getBoolean("remove_all_data")
 
-    override fun disableOfflineDatabase(): Boolean = config.getBoolean("disable_database_offline")
-
     override fun disableTracking(): Boolean = config.getBoolean("disable_tracking")
+
+    override fun uploadBitmapLimit(key: String): Long = config.getLong(key)
+
+    override fun getFindSearchType(): List<String> = config.getString("search_type_file").split(",")
+
+    override fun getScanFoldersPattern(): List<String> = config.getString("scan_folders").split(",")
 
     private fun sendEvent(event: String) {
         tracker.sendEvent("ConfigurationUtils", event)
-        tracker.sendOnServer()
     }
-
 }

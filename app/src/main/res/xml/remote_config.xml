@@ -1,6 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <defaultsMap>
     <entry>
+        <key>all_worker_status</key>
+        <value>true</value>
+    </entry>
+    <entry>
+        <key>time_for_restart_worker</key>
+        <value>1440</value>
+    </entry>
+    <entry>
         <key>worker_retry_value</key>
         <value>3</value>
     </entry>
@@ -9,59 +17,59 @@
         <value>true</value>
     </entry>
     <entry>
+        <key>remove_all_data</key>
+        <value>false</value>
+    </entry>
+    <entry>
         <key>time_for_scan_worker</key>
-        <value>1</value>
+        <value>90</value>
+    </entry>
+    <entry>
+        <key>time_for_scan_worker</key>
+        <value>360</value>
     </entry>
     <entry>
         <key>time_for_sync_worker</key>
-        <value>1</value>
-    </entry>
-    <entry>
-        <key>time_for_checker_worker</key>
-        <value>1</value>
+        <value>90</value>
     </entry>
     <entry>
         <key>time_for_original_worker</key>
-        <value>1</value>
+        <value>120</value>
     </entry>
     <entry>
         <key>time_for_thumbnail_worker</key>
-        <value>1</value>
+        <value>60</value>
     </entry>
     <entry>
         <key>time_for_folders_worker</key>
-        <value>1</value>
+        <value>730</value>
     </entry>
     <entry>
         <key>time_for_general_worker</key>
-        <value>1</value>
+        <value>720</value>
+    </entry>
+    <entry>
+        <key>disable_tracking</key>
+        <value>false</value>
     </entry>
     <entry>
         <key>candidate_remote_table_key</key>
         <value>candidates</value>
     </entry>
     <entry>
-        <key>user_email_key</key>
-        <value>devuicore@gmail.com</value>
+        <key>upload_originals_size</key>
+        <value>5</value>
     </entry>
     <entry>
-        <key>user_username_key</key>
-        <value>nf7761513</value>
+        <key>upload_thumbnails_limit</key>
+        <value>10</value>
     </entry>
     <entry>
-        <key>all_worker_status</key>
-        <value>true</value>
+        <key>search_type_file</key>
+        <value>.mp4,.jpg</value>
     </entry>
     <entry>
-        <key>remove_all_data</key>
-        <value>false</value>
-    </entry>
-    <entry>
-        <key>disable_database_offline</key>
-        <value>false</value>
-    </entry>
-    <entry>
-        <key>disable_tracking</key>
-        <value>false</value>
+        <key>scan_folders</key>
+        <value>Movies,Video,Pictures,Download,DCIM</value>
     </entry>
 </defaultsMap>

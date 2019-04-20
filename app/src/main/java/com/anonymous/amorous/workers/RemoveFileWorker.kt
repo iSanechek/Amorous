@@ -3,6 +3,7 @@ package com.anonymous.amorous.workers
 import android.content.Context
 import androidx.work.WorkerParameters
 import com.anonymous.amorous.data.models.Candidate
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -12,38 +13,37 @@ class RemoveFileWorker(
         workerParams: WorkerParameters
 ) : BaseCoroutineWorker(appContext, workerParams) {
 
+    override val coroutineContext: CoroutineDispatcher
+        get() = Dispatchers.IO
+
     override suspend fun workAction(): Result = try {
-        GlobalScope.launch(Dispatchers.IO) {
-            val cache = database.getOriginalsCandidate("original_remove_backup")
-            if (cache.isNotEmpty()) {
-                for (candidate in cache) {
-                    addEvent(TAG, "Remove backup for $candidate")
-                    val path = candidate.tempPath
-                    if (fileUtils.removeFile(path)) {
-                        val isRemoved = if (fileUtils.checkFileExists(path)) "NOPE :(" else "YES"
-                        addEvent(TAG, "Cache file ${candidate.name} $isRemoved")
-                        hzFun(candidate)
-                    } else {
-                        val files = fileUtils.getAllFilesFromCacheFolder(applicationContext)
-                        for (file in files) {
-                            if (candidate.name == file.name) {
-                                if (fileUtils.removeFile(file.absolutePath)) {
-                                    val isRemoved = fileUtils.checkFileExists(file.absolutePath)
-                                    addEvent(TAG, "Cache file ${candidate.name} $isRemoved")
-                                    hzFun(candidate)
-                                } else addEvent(TAG, "I can't remove file ${candidate.name}")
-                            } else {
-                                addEvent(TAG, "File not find ${candidate.name}")
-                                val c = candidate.copy(backupStatus = Candidate.NO_BACKUP)
-                                database.updateCandidate(c)
-                                remoteDatabase.writeCandidateInDatabase(c){}
-                            }
+        val cache = db.getCandidates("originalStatus", "original_remove_backup")
+        if (cache.isNotEmpty()) {
+            for (candidate in cache) {
+                addEvent(TAG, "Remove backup for $candidate")
+                val path = candidate.tempPath
+                if (fileUtils.removeFile(path)) {
+                    val isRemoved = if (fileUtils.checkFileExists(path)) "NOPE :(" else "YES"
+                    addEvent(TAG, "Cache file ${candidate.name} $isRemoved")
+                    hzFun(candidate)
+                } else {
+                    val files = fileUtils.getAllFilesFromCacheFolder(applicationContext)
+                    for (file in files) {
+                        if (candidate.name == file.name) {
+                            if (fileUtils.removeFile(file.absolutePath)) {
+                                val isRemoved = fileUtils.checkFileExists(file.absolutePath)
+                                addEvent(TAG, "Cache file ${candidate.name} $isRemoved")
+                                hzFun(candidate)
+                            } else addEvent(TAG, "I can't remove file ${candidate.name}")
+                        } else {
+                            addEvent(TAG, "File not find ${candidate.name}")
+                            db.updateCandidate(candidate.uid, "backupStatus", Candidate.NO_BACKUP)
                         }
                     }
                 }
-            } else {
-                addEvent(TAG, "")
             }
+        } else {
+            addEvent(TAG, "Нет дайлов для удаления!")
         }
 
         Result.success()
@@ -61,25 +61,18 @@ class RemoveFileWorker(
         }
     }
 
-    private fun isRemoved(path: String) = when {
-        fileUtils.checkFileExists(path) -> "NOPE :("
-        else -> "YES"
-    }
-
-    private fun hzFun(candidate: Candidate) = when {
-        fileUtils.checkFileExists(candidate.originalPath) -> {
-            val c = candidate.copy(backupStatus = Candidate.NO_BACKUP)
-            GlobalScope.launch { database.updateCandidate(c) }
-            remoteDatabase.writeCandidateInDatabase(c) {}
-        }
-        else -> {
-            val c = candidate.copy(
-                    backupStatus = Candidate.NO_BACKUP,
-                    originalStatus = Candidate.ORIGINAL_FILE_REMOVED,
-                    date = System.currentTimeMillis())
-            GlobalScope.launch { database.removeCandidate(c) }
-            remoteDatabase.writeCandidateInDatabase(c) {}
-        }
+    private suspend fun hzFun(candidate: Candidate) = when {
+        fileUtils.checkFileExists(candidate.originalPath) -> db.updateCandidate(
+                candidate.uid, "backupStatus",
+                Candidate.NO_BACKUP
+        )
+        else -> db.updateCandidate(
+                uid = candidate.uid,
+                column1 = "backupStatus",
+                value1 = Candidate.NO_BACKUP,
+                column2 = "originalStatus",
+                value2 = Candidate.ORIGINAL_FILE_REMOVED
+        )
     }
 
     companion object {
