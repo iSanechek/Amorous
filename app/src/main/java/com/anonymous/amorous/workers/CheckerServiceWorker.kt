@@ -19,24 +19,18 @@ class CheckerServiceWorker(
         get() = Dispatchers.Main
 
     override suspend fun workAction(): Result {
+        jss.scheduleJob(applicationContext)
         val serviceIsWork = jss.serviceIsRun(applicationContext)
         return if (!serviceIsWork) {
-            jss.scheduleJob(applicationContext)
-            addEvent(TAG, "Jobs service not running! Job start!")
-            if (!serviceIsWork) {
-                val retryCount = pref.getWorkerRetryCountValue(TAG)
-                if (retryCount < configuration.getWorkerRetryCount()) {
-                    val value = retryCount.inc()
-                    pref.updateWorkerRetryCountValue(TAG, value)
-                    addEvent(TAG, "Jobs service not starting! Retry! Count $retryCount")
-                    Result.retry()
-                } else {
-                    addEvent(TAG, "Jobs service retry start fail! Retry count $retryCount")
-                    Result.failure()
-                }
+            val retryCount = pref.getWorkerRetryCountValue(TAG)
+            if (retryCount < configuration.getWorkerRetryCount()) {
+                val value = retryCount.inc()
+                pref.updateWorkerRetryCountValue(TAG, value)
+                addEvent(TAG, "Jobs service not starting! Retry! Count $retryCount")
+                Result.retry()
             } else {
-                addEvent(TAG, "Jobs service is working!")
-                Result.success()
+                addEvent(TAG, "Jobs service retry start fail! Retry count $retryCount")
+                Result.failure()
             }
         } else {
             addEvent(TAG, "Jobs service is running!")

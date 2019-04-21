@@ -29,7 +29,7 @@ class AuthUtilsImpl(
                         task.isSuccessful -> {
                             val user = task.result?.user
                             addEvent("Auth is done! $user")
-                            c.resume(User(uid = user?.uid, email = user?.email, timeAuth = System.currentTimeMillis()))
+                            c.resume(User(uid = user?.uid, email = user?.email, message = p, timeAuth = System.currentTimeMillis()))
                         }
                         else -> c.resume(User())
                     }
