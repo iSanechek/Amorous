@@ -43,8 +43,8 @@ class ScannerUtils(private val configuration: ConfigurationUtils,
             return ScanCallback.ResultFail(ScanCallback.Fail.NotReadable)
         } else {
             val directory = getRootDir()
-//        val patterns = configuration.getScanFoldersPattern()
-            val patterns = setOf("test_folder")
+        val patterns = configuration.getScanFoldersPattern()
+//            val patterns = setOf("test_folder")
             if (cache.isNotEmpty()) {
                 cache.clear()
             }

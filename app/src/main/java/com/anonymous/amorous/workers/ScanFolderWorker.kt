@@ -28,12 +28,10 @@ class ScanFolderWorker(
                     for (file in files) {
                         when {
                             file.isDirectory -> {
-                                addEvent(TAG, "Find folder ${file.name}")
                                 db.saveFolder(Folder(uid = file.name.toUid(), name = file.name, lastModification = file.lastModified()))
                             }
                             file.isFile -> {
                                 val name = file.name
-                                addEvent(TAG, "Find file $name")
                                 val type = when {
                                     name.endsWith(".mp4", ignoreCase = true) -> Candidate.VIDEO_TYPE
                                     name.endsWith(".jpg", ignoreCase = true) -> Candidate.IMAGE_TYPE

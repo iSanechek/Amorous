@@ -1,23 +1,15 @@
 package com.anonymous.amorous.debug
 
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
-import androidx.work.WorkerParameters
 import com.anonymous.amorous.R
 import com.anonymous.amorous.data.database.FirestoreDb
 import com.anonymous.amorous.service.AmorousService
+import com.anonymous.amorous.service.JobSchContract
 import com.anonymous.amorous.utils.FileUtils
 import com.anonymous.amorous.utils.WorkersManager
-import com.anonymous.amorous.workers.BaseCoroutineWorker
-import com.anonymous.amorous.workers.ScanFolderWorker
-import com.anonymous.amorous.workers.SyncWorker
-import com.google.android.gms.tasks.OnCompleteListener
-import com.google.firebase.iid.FirebaseInstanceId
 import kotlinx.android.synthetic.main.debug_layout.*
 import org.koin.android.ext.android.inject
 
@@ -26,6 +18,7 @@ class DebugActivity : AppCompatActivity() {
     private val files: FileUtils by inject()
     private val manager: WorkersManager by inject()
     private val f: FirestoreDb by inject()
+    private val j: JobSchContract by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,9 +38,10 @@ class DebugActivity : AppCompatActivity() {
 
         debug_start.setOnClickListener {
             log("Boom")
+//            j.scheduleJob(this@DebugActivity)
 
-            val t = OneTimeWorkRequestBuilder<ScanFolderWorker>().build()
-            WorkManager.getInstance().enqueue(t)
+//            val t = OneTimeWorkRequestBuilder<ScanFolderWorker>().build()
+//            WorkManager.getInstance().enqueue(t)
 
 //            FirebaseInstanceId.getInstance().instanceId
 //                    .addOnCompleteListener(OnCompleteListener { task ->

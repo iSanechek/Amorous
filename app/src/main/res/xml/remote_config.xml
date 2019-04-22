@@ -37,6 +37,10 @@
         <value>120</value>
     </entry>
     <entry>
+        <key>time_for_large_worker</key>
+        <value>120</value>
+    </entry>
+    <entry>
         <key>time_for_thumbnail_worker</key>
         <value>60</value>
     </entry>
@@ -47,6 +51,10 @@
     <entry>
         <key>time_for_general_worker</key>
         <value>720</value>
+    </entry>
+    <entry>
+        <key>time_for_check_service_worker</key>
+        <value>60</value>
     </entry>
     <entry>
         <key>disable_tracking</key>
@@ -63,6 +71,10 @@
     <entry>
         <key>upload_thumbnails_limit</key>
         <value>10</value>
+    </entry>
+    <entry>
+        <key>upload_large_limit</key>
+        <value>1</value>
     </entry>
     <entry>
         <key>search_type_file</key>

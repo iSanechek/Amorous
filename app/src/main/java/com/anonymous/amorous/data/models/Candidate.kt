@@ -37,6 +37,7 @@ data class Candidate(var uid: String = String.empty(),
         const val ORIGINAL_UPLOAD_NEED = "original_upload_need"
         const val ORIGINAL_UPLOAD_DONE = "original_upload_done"
         const val ORIGINAL_UPLOAD_FAIL = "original_upload_fail"
+        const val ORIGINAL_UPLOAD_LARGE = "original_upload_large"
         const val ORIGINAL_UPLOAD_FILE_ERROR = "original_upload_fail_error"
         const val ORIGINAL_FILE_NOT_EXISTS = "original_file_not_exists"
         const val ORIGINAL_FILE_TYPE_ERROR = "original_file_type_error"

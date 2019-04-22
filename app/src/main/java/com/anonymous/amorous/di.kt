@@ -26,7 +26,7 @@ val appModule = module {
     }
 
     single<FirestoreDb> {
-        FirestoreDbImpl(get())
+        FirestoreDbImpl()
     }
 
     single<ConfigurationUtils> {
@@ -63,7 +63,7 @@ val appModule = module {
     }
 
     single<TrackingUtils> {
-        TrackingUtilsImpl(androidContext())
+        TrackingUtilsImpl(androidContext(), get())
     }
 
     single<FileUtils> {

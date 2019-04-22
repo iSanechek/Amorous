@@ -7,20 +7,23 @@ data class Info(
         val totalMemory: Long? = 0L,
         val freeMemory: Long? = 0L,
         val cacheFolderSize: Long? = 0L,
-        val lastUpdate: Long? = 0L
+        val lastUpdate: Long? = 0L,
+        val cacheFilesSize: Long? = 0L
 ) {
     fun toMap() = mapOf(
             "userKey" to userKey,
             "totalMemory" to totalMemory,
             "freeMemory" to freeMemory,
             "cacheFolderSize" to cacheFolderSize,
-            "lastUpdate" to lastUpdate
+            "lastUpdate" to lastUpdate,
+            "cacheFilesSize" to cacheFilesSize
     )
 
     fun toMapUpdate() = mapOf(
             "totalMemory" to totalMemory,
             "freeMemory" to freeMemory,
             "cacheFolderSize" to cacheFolderSize,
-            "lastUpdate" to lastUpdate
+            "lastUpdate" to lastUpdate,
+            "cacheFilesSize" to cacheFilesSize
     )
 }

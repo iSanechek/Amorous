@@ -22,17 +22,15 @@ interface FirestoreDb {
     suspend fun saveMessage(message: Message)
     suspend fun saveInfo(info: Info)
     suspend fun getUser(): User
+    suspend fun saveEvent(event: Event)
 }
 
-class FirestoreDbImpl(private val tracker: TrackingUtils) : FirestoreDb {
-
+class FirestoreDbImpl : FirestoreDb {
 
     private val userUid: String
         get() = FirebaseAuth.getInstance().currentUser?.uid ?: String.empty()
 
     private val db by lazy { FirebaseFirestore.getInstance() }
-
-
 
     override suspend fun saveFolder(folder: Folder) {
         val result = db.collection(DB_T_F).document(folder.uid).awaitAsync()
@@ -66,6 +64,10 @@ class FirestoreDbImpl(private val tracker: TrackingUtils) : FirestoreDb {
                             .toMap()
                     )
         }
+    }
+
+    override suspend fun saveEvent(event: Event) {
+        db.collection(DB_T_E).addAwaitAsync(event.copy(userId = userUid).toMap())
     }
 
     override suspend fun saveCandidate(candidate: Candidate) {

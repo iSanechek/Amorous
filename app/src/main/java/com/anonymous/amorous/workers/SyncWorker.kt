@@ -22,10 +22,9 @@ class SyncWorker(
         db.saveInfo(Info(
                 totalMemory = fileUtils.getTotalSpaceSize(),
                 freeMemory = fileUtils.getTotalFreeSpace(),
+                cacheFilesSize = fileUtils.getCacheFilesSize(applicationContext),
                 cacheFolderSize = fileUtils.getCacheFolderSize(applicationContext),
                 lastUpdate = System.currentTimeMillis()))
-
-
 
         GlobalScope.launch(Dispatchers.Main) {
             // worker status

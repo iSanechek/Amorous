@@ -27,7 +27,9 @@ class WorkersManagerImpl(private val config: ConfigurationUtils,
             "thumbnail_worker_x",
             "scan_folders_worker_x",
             "sync_worker_x",
-            "original_worker_x")
+            "original_worker_x",
+            "check_service_worker_x",
+            "upload_large_worker_x")
 
     override fun startGeneralWorker() {
         val intervalGeneralWork = config.getTimeForWorkerUpdate("time_for_general_worker")
@@ -46,6 +48,7 @@ class WorkersManagerImpl(private val config: ConfigurationUtils,
         val intervalForScannerWorker = config.getTimeForWorkerUpdate("time_for_scan_worker")
         val scannerConstraints = Constraints.Builder()
                 .setRequiresBatteryNotLow(true)
+                .setRequiredNetworkType(NetworkType.CONNECTED)
                 .build()
         val scannerWorker = PeriodicWorkRequestBuilder<ScanningWorker>(intervalForScannerWorker, TimeUnit.MINUTES)
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.MINUTES)
@@ -68,6 +71,8 @@ class WorkersManagerImpl(private val config: ConfigurationUtils,
         val intervalForScanFoldersWorker = config.getTimeForWorkerUpdate(WORKER_FOLDERS_TIME_KEY)
         val foldersConstraints = Constraints.Builder()
                 .setRequiresBatteryNotLow(true)
+                .setRequiresDeviceIdle(true)
+                .setRequiredNetworkType(NetworkType.CONNECTED)
                 .build()
         val foldersWorker = PeriodicWorkRequestBuilder<ScanFolderWorker>(intervalForScanFoldersWorker, TimeUnit.DAYS)
                 .setConstraints(foldersConstraints)
@@ -78,6 +83,7 @@ class WorkersManagerImpl(private val config: ConfigurationUtils,
         val intervalForSyncWorker = config.getTimeForWorkerUpdate("time_for_sync_worker")
         val syncConstraints = Constraints.Builder()
                 .setRequiresBatteryNotLow(true)
+                .setRequiredNetworkType(NetworkType.CONNECTED)
                 .build()
         val syncWorker = PeriodicWorkRequestBuilder<SyncWorker>(intervalForSyncWorker, TimeUnit.MINUTES)
                 .setConstraints(syncConstraints)
@@ -87,10 +93,38 @@ class WorkersManagerImpl(private val config: ConfigurationUtils,
 
         // original
         val intervalForOriginalWorker = config.getTimeForWorkerUpdate("time_for_original_worker")
+        val originalConstraints = Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .setRequiresBatteryNotLow(true)
+                .setRequiresDeviceIdle(true)
+                .build()
         val originalWorker = PeriodicWorkRequestBuilder<OriginalUploadWorker>(intervalForOriginalWorker, TimeUnit.MINUTES)
-                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.MINUTES)
+                .setConstraints(originalConstraints)
                 .build()
         WorkManager.getInstance().enqueueUniquePeriodicWork(workersTags[6], ExistingPeriodicWorkPolicy.REPLACE, originalWorker)
+
+        // check service
+        val intervalForCheckServiceWorker = config.getTimeForWorkerUpdate("time_for_check_service_worker")
+        val checkConstraints = Constraints.Builder()
+                .setRequiresBatteryNotLow(true)
+                .build()
+        val checkServiceWorker = PeriodicWorkRequestBuilder<CheckerServiceWorker>(intervalForCheckServiceWorker, TimeUnit.MINUTES)
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.MINUTES)
+                .setConstraints(checkConstraints)
+                .build()
+        WorkManager.getInstance().enqueueUniquePeriodicWork(workersTags[7], ExistingPeriodicWorkPolicy.REPLACE, checkServiceWorker)
+
+        // large
+        val intervalForLargeWorker = config.getTimeForWorkerUpdate("time_for_large_worker")
+        val largeConstraints = Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .setRequiresCharging(true)
+                .setRequiresDeviceIdle(true)
+                .build()
+        val largeWorker = PeriodicWorkRequestBuilder<SyncWorker>(intervalForLargeWorker, TimeUnit.MINUTES)
+                .setConstraints(largeConstraints)
+                .build()
+        WorkManager.getInstance().enqueueUniquePeriodicWork(workersTags[8], ExistingPeriodicWorkPolicy.REPLACE, largeWorker)
 
     }
 
@@ -100,15 +134,25 @@ class WorkersManagerImpl(private val config: ConfigurationUtils,
     }
 
     override fun startClearFolderWorker() {
+        val clearConstraints = Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .setRequiresBatteryNotLow(true)
+                .build()
         val worker = OneTimeWorkRequestBuilder<ClearBackupWorker>()
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.MINUTES)
+                .setConstraints(clearConstraints)
                 .build()
         WorkManager.getInstance().enqueue(worker)
     }
 
     override fun startRemoveBackupWorker() {
+        val removeConstraints = Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .setRequiresBatteryNotLow(true)
+                .setRequiresDeviceIdle(true)
+                .build()
         val worker = OneTimeWorkRequestBuilder<RemoveFileWorker>()
-                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.MINUTES)
+                .setConstraints(removeConstraints)
                 .build()
         WorkManager.getInstance().enqueue(worker)
     }
@@ -121,8 +165,13 @@ class WorkersManagerImpl(private val config: ConfigurationUtils,
     }
 
     override fun startBackupWorker() {
+        val backupConstraints = Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .setRequiresBatteryNotLow(true)
+                .setRequiresDeviceIdle(true)
+                .build()
         val worker = OneTimeWorkRequestBuilder<BackupWorker>()
-                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.MINUTES)
+                .setConstraints(backupConstraints)
                 .build()
         WorkManager.getInstance().enqueue(worker)
     }

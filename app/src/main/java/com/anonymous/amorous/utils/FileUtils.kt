@@ -25,10 +25,14 @@ interface FileUtils {
     fun getCacheFolderSize(context: Context): Long
     fun getTotalFreeSpace(): Long
     fun getTotalSpaceSize(): Long
+    fun getCacheFilesSize(context: Context): Long
 
 }
 
 class FileUtilsImpl(private val tracker: TrackingUtils) : FileUtils {
+
+    override fun getCacheFilesSize(context: Context): Long =
+            File(getCacheFolderPath(context)).listFiles().size.toLong()
 
     override fun getTotalSpaceSize(): Long {
         val path = Environment.getExternalStorageDirectory()
@@ -57,7 +61,6 @@ class FileUtilsImpl(private val tracker: TrackingUtils) : FileUtils {
     }
 
     override fun checkFileExists(path: String): Boolean {
-        Log.e("MDA", "Path $path")
         if (path.isEmpty()) return false
         val file = File(path)
         var exists = file.exists()
@@ -67,8 +70,6 @@ class FileUtilsImpl(private val tracker: TrackingUtils) : FileUtils {
                 exists = false
             }
         }
-
-        Log.e("MDA", "Exists $exists")
         return exists
     }
 
