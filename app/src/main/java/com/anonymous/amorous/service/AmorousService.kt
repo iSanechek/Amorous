@@ -14,7 +14,7 @@ class AmorousService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        sendEvent("Service on create")
+        sendEvent("Сервис запущен")
         manager.startGeneralWorker()
         manager.restartWorker()
     }
@@ -23,7 +23,7 @@ class AmorousService : Service() {
             START_NOT_STICKY
 
     override fun onDestroy() {
-        sendEvent("Service is destroy!")
+        sendEvent("Сервис умер!")
         super.onDestroy()
     }
 

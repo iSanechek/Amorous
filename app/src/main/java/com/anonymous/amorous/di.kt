@@ -59,11 +59,11 @@ val appModule = module {
     }
 
     factory<ScanContract> {
-        ScannerUtils(get(), get())
+        ScannerUtils(get())
     }
 
     single<TrackingUtils> {
-        TrackingUtilsImpl(androidContext(), get())
+        TrackingUtilsImpl(get())
     }
 
     single<FileUtils> {

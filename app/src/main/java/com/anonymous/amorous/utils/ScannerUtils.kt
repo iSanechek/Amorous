@@ -5,14 +5,10 @@ import android.graphics.BitmapFactory
 import android.media.ThumbnailUtils
 import android.os.Environment
 import android.provider.MediaStore
-import android.util.Log
 import com.anonymous.amorous.data.models.Candidate
 import com.anonymous.amorous.empty
 import com.anonymous.amorous.toUid
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.io.File
-import java.util.*
 
 sealed class ScanCallback {
     data class ResultOk(val items: List<Candidate>) : ScanCallback()
@@ -20,9 +16,9 @@ sealed class ScanCallback {
     data class ResultFail(val fail: Fail) : ScanCallback()
     sealed class Fail {
         object NoPermission : Fail()
-        object NotReadable: Fail()
-        object RootIsEmpty: Fail()
-        object Empty: Fail()
+        object NotReadable : Fail()
+        object RootIsEmpty : Fail()
+        object Empty : Fail()
     }
 }
 
@@ -33,8 +29,7 @@ interface ScanContract {
     fun getVideoThumbnail(path: String): Bitmap
 }
 
-class ScannerUtils(private val configuration: ConfigurationUtils,
-                   private val track: TrackingUtils) : ScanContract {
+class ScannerUtils(private val configuration: ConfigurationUtils) : ScanContract {
 
     private val cache = mutableListOf<Candidate>()
 
@@ -43,7 +38,7 @@ class ScannerUtils(private val configuration: ConfigurationUtils,
             return ScanCallback.ResultFail(ScanCallback.Fail.NotReadable)
         } else {
             val directory = getRootDir()
-        val patterns = configuration.getScanFoldersPattern()
+            val patterns = configuration.getScanFoldersPattern()
 //            val patterns = setOf("test_folder")
             if (cache.isNotEmpty()) {
                 cache.clear()

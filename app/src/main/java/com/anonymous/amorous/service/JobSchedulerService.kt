@@ -8,22 +8,15 @@ import android.app.job.JobService
 import android.content.ComponentName
 import android.content.Context
 import android.database.Cursor
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.media.ThumbnailUtils
 import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
-import android.util.Log
 import com.anonymous.amorous.BuildConfig
 import com.anonymous.amorous.data.database.FirestoreDb
 import com.anonymous.amorous.data.models.Candidate
 import com.anonymous.amorous.toUid
 import com.anonymous.amorous.utils.FileUtils
 import com.anonymous.amorous.utils.TrackingUtils
-import com.google.firebase.ml.vision.FirebaseVision
-import com.google.firebase.ml.vision.common.FirebaseVisionImage
-import com.google.firebase.ml.vision.label.FirebaseVisionOnDeviceImageLabelerOptions
 import kotlinx.coroutines.*
 import org.koin.android.ext.android.inject
 
@@ -34,7 +27,6 @@ class JobSchedulerService : JobSchContract, JobService() {
     private val tracker: TrackingUtils by inject()
     private var jobInfo: JobInfo? = null
 
-    private val jobsCache = hashMapOf<String, Job>()
     private val parentJob = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.IO + parentJob)
 
@@ -75,28 +67,11 @@ class JobSchedulerService : JobSchContract, JobService() {
                                         if (dir.startsWith(DCIM_DIR)) {
 //                                            val fileId = cursor.getInt(PROJECTION_ID)
                                             val fileName = dir.substring(dir.lastIndexOf("/") + 1)
-                                            Log.e(TAG, "name $fileName")
-                                            Log.e(TAG, "dir $dir")
                                             doAsyncJob(dir, fileName)
-//                                            jobsCache[fileName]?.cancel()
-//                                            jobsCache[fileName] = scope.launch {
-//                                                try {
-//
-////                                                    doWorkAsync(
-////                                                            dir = dir,
-////                                                            name = fileName
-////                                                    ).await()
-//
-//                                                } catch (e: Exception) {
-//                                                    e.printStackTrace()
-//                                                    addEvent("Error for $fileName ${e.message}")
-//                                                    jobsCache[fileName]?.cancel()
-//                                                }
-//                                            }
                                         }
                                     }
                                 } catch (e: SecurityException) {
-                                    addEvent("Error: no access to media! ${e.message}")
+                                    addEvent("Ошбка: Нет доступа к медиафайлу! ${e.message}")
                                 } finally {
                                     cursor?.close()
                                 }
@@ -156,7 +131,6 @@ class JobSchedulerService : JobSchContract, JobService() {
     private fun doAsyncJob(dir: String, name: String) = GlobalScope.launch(Dispatchers.IO) {
         if (fileUtils.checkCreatedCacheFolder(this@JobSchedulerService)) {
             val tempPath = fileUtils.copyToCacheFolder(this@JobSchedulerService, dir)
-            Log.e("MDA", "Temp path $tempPath")
             db.saveCandidate(Candidate(
                         uid = name.toUid(),
                         name = name,

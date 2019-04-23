@@ -4,7 +4,8 @@ import android.content.Context
 import androidx.work.WorkerParameters
 import com.anonymous.amorous.data.models.Candidate
 import com.anonymous.amorous.empty
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 
 class BackupWorker(
         appContext: Context,
