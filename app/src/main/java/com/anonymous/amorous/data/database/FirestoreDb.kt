@@ -141,9 +141,4 @@ class FirestoreDbImpl : FirestoreDb {
                 .mapNotNull { it.toObject(Candidate::class.java) }
                 .toList()
     }
-
-    private fun log(msg: String?) {
-        Log.e("Firestore", msg)
-    }
-
 }

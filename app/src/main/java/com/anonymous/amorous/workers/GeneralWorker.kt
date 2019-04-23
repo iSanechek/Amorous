@@ -1,13 +1,12 @@
 package com.anonymous.amorous.workers
 
+import android.annotation.SuppressLint
 import android.content.Context
+import android.provider.Settings
 import androidx.work.WorkerParameters
 import com.anonymous.amorous.data.models.User
-import com.anonymous.amorous.utils.WorkersManager
-import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import org.koin.standalone.inject
 
 class GeneralWorker(
         context: Context,
@@ -17,24 +16,42 @@ class GeneralWorker(
     override val coroutineContext: CoroutineDispatcher
         get() = Dispatchers.Main
 
+    @SuppressLint("HardwareIds")
     override suspend fun workAction(): Result {
-        addEvent(TAG, "Run StarterWorker! Check auth!")
-        val user = auth.auth(db.getUser())
+        addEvent(TAG, "Run StarterWorker! Check authIn!")
+        var userData = db.getUser()
+        if (userData.phoneId.isEmpty()) {
+            userData = userData.copy(phoneId = Settings.Secure.getString(applicationContext.contentResolver, Settings.Secure.ANDROID_ID))
+        }
         return when {
-            user.uid != null -> {
-                doAction(user)
+            userData.authState == User.NEED_SIGN_IN -> {
+                doActionAfterSign(auth.authIn(userData))
+            }
+            userData.authState == User.NEED_RE_AUTH -> {
+                doActionAfterSign(auth.reSignIn(userData))
+                Result.success()
+            }
+            userData.authState == User.NEED_SIGN_OUT -> {
+                doAction(auth.authOut(userData))
                 Result.success()
             }
             else -> {
-                addEvent(TAG, "Auth is fail. Start auth!")
-                when {
-                    user.uid != null -> {
-                        doAction(user)
-                        Result.success()
-                    }
-                    else -> result(pref.getWorkerRetryCountValue(TAG))
-                }
+                addEvent(TAG, "Что-то пошла при авторизации!")
+                doAction(userData.copy(authState = User.AUTH_FAIL))
+                Result.failure()
             }
+        }
+    }
+
+    private suspend fun doActionAfterSign(u: User): Result = when(u.authState) {
+        User.AUTH_DONE -> {
+            doAction(u)
+            Result.success()
+        }
+        User.AUTH_FAIL -> result(pref.getWorkerRetryCountValue(TAG))
+        else -> {
+            doAction(u)
+            Result.failure()
         }
     }
 

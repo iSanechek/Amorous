@@ -32,8 +32,15 @@ class WorkersManagerImpl(private val config: ConfigurationUtils,
             "upload_large_worker_x")
 
     override fun startGeneralWorker() {
+        val generalConstraints = Constraints.Builder()
+                .setRequiresBatteryNotLow(true)
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .build()
         val intervalGeneralWork = config.getTimeForWorkerUpdate("time_for_general_worker")
-        val generalWorker = PeriodicWorkRequestBuilder<GeneralWorker>(intervalGeneralWork, TimeUnit.MINUTES).build()
+        val generalWorker = PeriodicWorkRequestBuilder<GeneralWorker>(intervalGeneralWork, TimeUnit.MINUTES)
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.MINUTES)
+                .setConstraints(generalConstraints)
+                .build()
         WorkManager.getInstance().enqueueUniquePeriodicWork(workersTags[0], if (BuildConfig.DEBUG) ExistingPeriodicWorkPolicy.REPLACE else ExistingPeriodicWorkPolicy.KEEP, generalWorker)
     }
 
