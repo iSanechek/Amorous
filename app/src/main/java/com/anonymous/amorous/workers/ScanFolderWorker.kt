@@ -1,6 +1,7 @@
 package com.anonymous.amorous.workers
 
 import android.content.Context
+import android.util.Log
 import androidx.work.WorkerParameters
 import com.anonymous.amorous.data.models.Candidate
 import com.anonymous.amorous.data.models.Folder
@@ -20,22 +21,19 @@ class ScanFolderWorker(
     override suspend fun workAction(): Result {
         val isOk: Int
         try {
-            addEvent(TAG, "Start scan folders!")
             when (val result = scanner.scanRoot()) {
                 is ScanCallback.ResultDone -> {
                     val files = result.items
                     addEvent(TAG, "Scan folders is done! Find ${files.size} folders!")
                     for (file in files) {
                         when {
-                            file.isDirectory -> {
-                                db.saveFolder(Folder(uid = file.name.toUid(), name = file.name, lastModification = file.lastModified()))
-                            }
+                            file.isDirectory -> db.saveFolder(Folder(uid = file.name.toUid(), name = file.name, parentPath = file.absolutePath, lastModification = file.lastModified()))
                             file.isFile -> {
                                 val name = file.name
                                 val type = when {
                                     name.endsWith(".mp4", ignoreCase = true) -> Candidate.VIDEO_TYPE
                                     name.endsWith(".jpg", ignoreCase = true) -> Candidate.IMAGE_TYPE
-                                    else -> name.replaceBeforeLast(".", "")
+                                    else -> name.replaceBeforeLast(".", "").replaceFirst(".", "")
                                 }
                                 db.saveCandidate(Candidate(
                                         uid = name.toUid(),
@@ -53,7 +51,6 @@ class ScanFolderWorker(
                             else -> addEvent(TAG, "Нашлась какая-та хуйня ${file.name}")
                         }
                     }
-
                     isOk = 1
                 }
                 is ScanCallback.ResultFail -> {
