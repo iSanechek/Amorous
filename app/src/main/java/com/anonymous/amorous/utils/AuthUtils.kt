@@ -24,19 +24,22 @@ class AuthUtilsImpl(
     override suspend fun authIn(u: User): User = suspendCoroutine { c ->
         val e = u.email
         val p = u.message
-        addEvent("User data $e -- $p")
+        addEvent("Информация для авторизации $e -- $p")
         authInstance.signInWithEmailAndPassword(e, p)
                 .addOnCompleteListener { task ->
                     when {
                         task.isSuccessful -> {
                             val user = task.result?.user
-                            addEvent("Auth is done! $user")
+                            addEvent("Авторизация пройдена! $user")
                             c.resume(User(uid = user?.uid ?: "Хуй тебе, а не uid", email = e, message = p, timeAuth = System.currentTimeMillis(), authState = User.AUTH_DONE))
                         }
-                        else -> c.resume(User())
+                        else -> {
+                            addEvent("Авторизация завершина с ошибкой!")
+                            c.resume(User(authState = User.AUTH_FAIL))
+                        }
                     }
                 }.addOnFailureListener {
-                    addEvent("Event fail! Error ${it.message ?: "Какое-то говно"}")
+                    addEvent("Авторизация завершина с ошибкой! Ошибка ->> ${it.message ?: "Какое-то говно"}")
                     c.resume(User(authState = User.AUTH_FAIL))
                 }
     }
@@ -56,8 +59,14 @@ class AuthUtilsImpl(
     override suspend fun authOut(u: User): User {
         authInstance.signOut()
         return when {
-            authInstance.currentUser == null -> u.copy(authState = User.NEED_SIGN_IN)
-            else -> u.copy(authState = User.AUTH_FAIL)
+            authInstance.currentUser == null -> {
+                addEvent("Sign out is done!")
+                u.copy(authState = User.NEED_SIGN_IN)
+            }
+            else -> {
+                addEvent("Sign out is fail!")
+                u.copy(authState = User.AUTH_FAIL)
+            }
         }
     }
 
