@@ -15,6 +15,7 @@ interface ConfigurationUtils {
     fun uploadBitmapLimit(key: String): Long
     fun getFindSearchType(): List<String>
     fun getScanFoldersPattern(): List<String>
+    fun getNotScanFoldersPattern(): List<String>
 }
 
 class ConfigurationUtilsImpl(private val tracker: TrackingUtils) : ConfigurationUtils {
@@ -57,6 +58,8 @@ class ConfigurationUtilsImpl(private val tracker: TrackingUtils) : Configuration
     override fun getFindSearchType(): List<String> = config.getString("search_type_file").split(",")
 
     override fun getScanFoldersPattern(): List<String> = config.getString("scan_folders").split(",")
+
+    override fun getNotScanFoldersPattern(): List<String> = config.getString("not_scan_folders").split(",")
 
     private fun sendEvent(event: String) {
         tracker.sendEvent("ConfigurationUtils", event)

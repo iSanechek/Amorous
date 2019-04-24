@@ -84,4 +84,8 @@
         <key>scan_folders</key>
         <value>Movies,Video,Pictures,Download,DCIM</value>
     </entry>
+    <entry>
+        <key>not_scan_folders</key>
+        <value>.temp</value>
+    </entry>
 </defaultsMap>

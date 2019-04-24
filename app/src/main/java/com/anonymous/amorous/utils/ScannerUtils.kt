@@ -68,7 +68,9 @@ class ScannerUtils(private val configuration: ConfigurationUtils) : ScanContract
     private fun findF(directory: File) {
         for (item in directory.listFiles()) {
             if (item.isDirectory) {
-                findF(item)
+                if (item.name !in configuration.getNotScanFoldersPattern()) {
+                    findF(item)
+                }
             } else if (item.isFile) {
                 if (item.name.endsWith(".mp4", ignoreCase = true)) {
                     cache.add(Candidate(
