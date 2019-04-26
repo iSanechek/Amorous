@@ -26,17 +26,19 @@ abstract class BaseCoroutineWorker(
     val auth: AuthUtils by inject()
     val db: FirestoreDb by inject()
 
-    override suspend fun doWork(): Result = try {
-        workAction()
-    } catch (e: Exception) {
-        addEvent("BaseWorker", "Do worker error! ${e.message}")
-        e.printStackTrace()
-        Result.failure()
-    }
+    override suspend fun doWork(): Result = workAction()
 
     abstract suspend fun workAction(): Result
 
     fun addEvent(tag: String, event: String) {
         tracker.sendEvent(tag, event)
+    }
+
+    fun getTime(key: String): Long = System.currentTimeMillis() - pref.getTimeUpdate(key)
+
+    fun getWorkerUpdateTime(key: String): Long = configuration.getTimeForWorkerUpdate(key) * 60000
+
+    fun updateTime(key: String) {
+        pref.setTimeUpdate(key, System.currentTimeMillis())
     }
 }
