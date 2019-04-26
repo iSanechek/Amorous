@@ -5,6 +5,7 @@ import androidx.work.WorkerParameters
 import com.anonymous.amorous.service.JobSchContract
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import org.koin.core.parameter.parametersOf
 import org.koin.standalone.inject
 
@@ -15,13 +16,10 @@ class CheckerServiceWorker(
 
     private val jss: JobSchContract by inject()
 
-    override val coroutineContext: CoroutineDispatcher
-        get() = Dispatchers.Main
-
-    override suspend fun workAction(): Result {
+    override suspend fun workAction(): Result = coroutineScope {
         jss.scheduleJob(applicationContext)
         val serviceIsWork = jss.serviceIsRun(applicationContext)
-        return if (!serviceIsWork) {
+        if (!serviceIsWork) {
             val retryCount = pref.getWorkerRetryCountValue(TAG)
             if (retryCount < configuration.getWorkerRetryCount()) {
                 val value = retryCount.inc()

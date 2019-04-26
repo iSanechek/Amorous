@@ -4,11 +4,7 @@ import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.anonymous.amorous.data.database.FirestoreDb
-import com.anonymous.amorous.data.models.Event
-import com.anonymous.amorous.empty
 import com.anonymous.amorous.utils.*
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import org.koin.standalone.KoinComponent
 import org.koin.standalone.inject
 
