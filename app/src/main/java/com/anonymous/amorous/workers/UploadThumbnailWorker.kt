@@ -3,7 +3,9 @@ package com.anonymous.amorous.workers
 import android.content.Context
 import androidx.work.WorkerParameters
 import com.anonymous.amorous.utils.UploadBitmapUtils
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import org.koin.standalone.inject
 
 class UploadThumbnailWorker(
@@ -12,25 +14,28 @@ class UploadThumbnailWorker(
 ) : BaseCoroutineWorker(appContext, workerParams) {
     private val upload: UploadBitmapUtils by inject()
 
-    override val coroutineContext: CoroutineDispatcher
-        get() = Dispatchers.IO
-
-    override suspend fun workAction(): Result {
-        db.getCandidates(
-                "thumbnailStatus",
-                "thumbnail_upload_need",
-                configuration.uploadBitmapLimit("upload_thumbnails_limit")
-        ).map {
-            upload.uploadThumbnail(it)
-        }.forEach {
+    override suspend fun workAction(): Result = coroutineScope {
+        try {
+                val candidates = db.getCandidates(
+                        "thumbnailStatus",
+                        "thumbnail_upload_need",
+                        configuration.uploadBitmapLimit("upload_thumbnails_limit")
+                )
+            addEvent("UploadThumbnailWorker", "Candidates for upload size ${candidates.size}")
+                for (candidate in candidates) {
+                    val result = withContext(Dispatchers.IO) { upload.uploadThumbnail(candidate) }
                     db.updateCandidate(
-                            uid = it.uid,
+                            uid = result.uid,
                             column1 = "thumbnailStatus",
-                            value1 = it.thumbnailStatus,
+                            value1 = result.thumbnailStatus,
                             column2 = "thumbnailRemoteUrl",
-                            value2 = it.thumbnailRemoteUrl
+                            value2 = result.thumbnailRemoteUrl
                     )
                 }
-        return Result.success()
+            Result.success()
+        } catch (e: Exception) {
+            addEvent("UploadThumbnailWorker", "Oops! Ошибочка ${e.message}")
+            Result.failure()
+        }
     }
 }

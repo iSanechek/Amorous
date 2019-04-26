@@ -1,6 +1,7 @@
 package com.anonymous.amorous.workers
 
 import android.content.Context
+import android.util.Log
 import androidx.work.WorkerParameters
 import com.anonymous.amorous.utils.ScanCallback
 import kotlinx.coroutines.CoroutineDispatcher
@@ -16,15 +17,30 @@ class ScanningWorker(
         get() = Dispatchers.IO
 
     override suspend  fun workAction(): Result {
+
+        if (getWorkerUpdateTime("time_for_scan_worker") > getTime(TAG)) return Result.success()
+        updateTime(TAG)
+
         var isOk = false
+        val candidates = db.getCandidates()
         when(val callback = scanner.scanFolders()) {
             is ScanCallback.ResultOk -> {
                 val items = callback.items
                 isOk = when {
                     items.isNotEmpty() -> {
                         addEvent(TAG, "Scanning is done! Result size: ${items.size}")
-                        for (candidate in items) {
-                            db.saveCandidate(candidate)
+                        if (candidates.isNotEmpty()) {
+                            for (candidate in items) {
+                                db.saveCandidate(candidate)
+                            }
+                        } else {
+                            for (item in items) {
+                                for (candidate in candidates) {
+                                    if (candidate.name != item.name) {
+                                        db.saveCandidate(candidate)
+                                    }
+                                }
+                            }
                         }
                         true
                     }

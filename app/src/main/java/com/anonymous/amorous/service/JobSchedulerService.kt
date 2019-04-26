@@ -12,7 +12,7 @@ import android.net.Uri
 import android.os.Environment
 import android.provider.MediaStore
 import com.anonymous.amorous.BuildConfig
-import com.anonymous.amorous.data.database.FirestoreDb
+import com.anonymous.amorous.data.database.RemoteDb
 import com.anonymous.amorous.data.models.Candidate
 import com.anonymous.amorous.toUid
 import com.anonymous.amorous.utils.FileUtils
@@ -22,7 +22,7 @@ import org.koin.android.ext.android.inject
 
 class JobSchedulerService : JobSchContract, JobService() {
 
-    private val db: FirestoreDb by inject()
+    private val db: RemoteDb by inject()
     private val fileUtils: FileUtils by inject()
     private val tracker: TrackingUtils by inject()
     private var jobInfo: JobInfo? = null

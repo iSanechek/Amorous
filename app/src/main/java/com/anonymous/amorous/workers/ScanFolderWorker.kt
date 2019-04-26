@@ -3,6 +3,7 @@ package com.anonymous.amorous.workers
 import android.content.Context
 import android.util.Log
 import androidx.work.WorkerParameters
+import com.anonymous.amorous.WORKER_FOLDERS_TIME_KEY
 import com.anonymous.amorous.data.models.Candidate
 import com.anonymous.amorous.data.models.Folder
 import com.anonymous.amorous.toUid
@@ -21,6 +22,10 @@ class ScanFolderWorker(
     override suspend fun workAction(): Result {
         val isOk: Int
         try {
+
+            if (getWorkerUpdateTime(WORKER_FOLDERS_TIME_KEY) > getTime(TAG)) return Result.success()
+            updateTime(TAG)
+
             when (val result = scanner.scanRoot()) {
                 is ScanCallback.ResultDone -> {
                     val files = result.items

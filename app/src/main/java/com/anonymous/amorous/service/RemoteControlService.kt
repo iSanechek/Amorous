@@ -1,19 +1,15 @@
 package com.anonymous.amorous.service
 
 import android.util.Log
-import com.anonymous.amorous.data.database.FirestoreDb
-import com.anonymous.amorous.data.models.Message
+import com.anonymous.amorous.data.database.RemoteDb
 import com.anonymous.amorous.utils.TrackingUtils
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 
 class RemoteControlService : FirebaseMessagingService() {
 
-    private val db: FirestoreDb by inject()
+    private val db: RemoteDb by inject()
     private val tracker: TrackingUtils by inject()
 
     override fun onCreate() {
@@ -29,9 +25,9 @@ class RemoteControlService : FirebaseMessagingService() {
     override fun onNewToken(p0: String?) {
         addEvent("New token!")
         p0?.let {
-            GlobalScope.launch(Dispatchers.IO) {
-                db.saveMessage(Message(message = it))
-            }
+//            GlobalScope.launch(Dispatchers.IO) {
+//                db.saveMessage(Message(message = it))
+//            }
         }
         log("onNewToken")
     }

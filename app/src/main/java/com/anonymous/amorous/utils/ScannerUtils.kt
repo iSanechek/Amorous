@@ -39,7 +39,6 @@ class ScannerUtils(private val configuration: ConfigurationUtils) : ScanContract
         } else {
             val directory = getRootDir()
             val patterns = configuration.getScanFoldersPattern()
-//            val patterns = setOf("test_folder")
             if (cache.isNotEmpty()) {
                 cache.clear()
             }

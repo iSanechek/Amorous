@@ -28,7 +28,7 @@ class UploadBitmapUtilsImpl(
         private val configuration: ConfigurationUtils
 ) : UploadBitmapUtils {
 
-    override suspend  fun uploadThumbnail(candidate: Candidate): Candidate = suspendCoroutine { c ->
+    override suspend fun uploadThumbnail(candidate: Candidate): Candidate = suspendCoroutine { c ->
         val storage = FirebaseStorage.getInstance()
         val imageRef = storage.reference
         val path = getPath(candidate)

@@ -18,7 +18,7 @@ class UploadLargeWorker(
     override val coroutineContext: CoroutineDispatcher
         get() = Dispatchers.IO
 
-    override suspend fun workAction(): Result = try {
+    override suspend fun workAction(): Result {
         val cache = db.getCandidates(
                 "originalStatus",
                 "original_upload_large",
@@ -45,19 +45,7 @@ class UploadLargeWorker(
             }
             else -> addEvent(TAG, "Candidate for upload large is empty!")
         }
-        Result.success()
-    } catch (e: Exception) {
-        val retryCount = pref.getWorkerRetryCountValue(TAG)
-        if (retryCount < configuration.getWorkerRetryCount()) {
-            val value = retryCount.inc()
-            pref.updateWorkerRetryCountValue(TAG, value)
-            addEvent(TAG, "Загрузка оригинала завершилось с ошибкой. Повторная попатка номер $value")
-            Result.retry()
-        } else {
-            addEvent(TAG, "Не удалось загрузить оригинал $retryCount")
-            pref.updateWorkerRetryCountValue(TAG, 0)
-            Result.failure()
-        }
+        return Result.success()
     }
 
     private suspend fun up(candidate: Candidate) {

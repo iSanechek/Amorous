@@ -15,9 +15,6 @@ class FindFileWorker(
 
     private val upload: UploadBitmapUtils by inject()
 
-    override val coroutineContext: CoroutineDispatcher
-        get() = Dispatchers.IO
-
     override suspend fun workAction(): Result {
         val cache = db.getCandidates("originalStatus", "original_file_need_search")
         if (cache.isEmpty()) {

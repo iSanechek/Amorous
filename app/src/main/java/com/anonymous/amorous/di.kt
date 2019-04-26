@@ -2,8 +2,8 @@ package com.anonymous.amorous
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.anonymous.amorous.data.database.FirestoreDb
-import com.anonymous.amorous.data.database.FirestoreDbImpl
+import com.anonymous.amorous.data.database.RemoteDb
+import com.anonymous.amorous.data.database.RemoteDbImpl
 import com.anonymous.amorous.service.JobSchContract
 import com.anonymous.amorous.service.JobSchedulerService
 import com.anonymous.amorous.utils.*
@@ -25,8 +25,8 @@ val appModule = module {
         )
     }
 
-    single<FirestoreDb> {
-        FirestoreDbImpl()
+    single<RemoteDb> {
+        RemoteDbImpl()
     }
 
     single<ConfigurationUtils> {
@@ -63,7 +63,7 @@ val appModule = module {
     }
 
     single<TrackingUtils> {
-        TrackingUtilsImpl(get())
+        TrackingUtilsImpl(androidContext(), get())
     }
 
     single<FileUtils> {

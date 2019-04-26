@@ -22,7 +22,7 @@ class GeneralWorker(
         addEvent(TAG, "Запущен General Worker! Проверка авторизации!")
         return if (auth.isAuth()) {
             addEvent(TAG, "Auth is Ok!")
-            val userData = db.getUser()
+            val userData = db.getUser(true)
             when {
                 userData.authState == User.NEED_RE_AUTH -> doActionAfterSign(auth.reSignIn(userData))
                 userData.authState == User.NEED_SIGN_OUT -> {
@@ -35,7 +35,7 @@ class GeneralWorker(
                 }
             }
         } else {
-            var userData = db.getUser()
+            var userData = db.getUser(false)
             if (userData.phoneId.isEmpty()) {
                 userData = userData.copy(phoneId = Settings.Secure.getString(applicationContext.contentResolver, Settings.Secure.ANDROID_ID))
             }

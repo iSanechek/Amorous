@@ -22,8 +22,8 @@ const val WORKER_FOLDERS_TIME_KEY = "time_for_folders_worker"
 const val CANDIDATE_REMOTE_TABLE_KEY = "candidate_remote_table_key"
 const val JOBS_SERVICE_STATUS_KEY = "jobs_server_start"
 
-const val USER_EMAIL = "devuicore@gmail.com"
-const val USER_MESSAGE = "nf7761513"
+const val USER_EMAIL = "shellhellads012@gmail.com"
+const val USER_MESSAGE = "hs888sa7gas9010sad"
 
 suspend fun DocumentReference.awaitAsync(): DocumentSnapshot {
     return suspendCancellableCoroutine { continuation ->

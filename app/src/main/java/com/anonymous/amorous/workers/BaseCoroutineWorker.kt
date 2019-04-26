@@ -3,7 +3,7 @@ package com.anonymous.amorous.workers
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.anonymous.amorous.data.database.FirestoreDb
+import com.anonymous.amorous.data.database.RemoteDb
 import com.anonymous.amorous.utils.*
 import org.koin.standalone.KoinComponent
 import org.koin.standalone.inject
@@ -20,7 +20,7 @@ abstract class BaseCoroutineWorker(
     val fileUtils: FileUtils by inject()
     val manager: WorkersManager by inject()
     val auth: AuthUtils by inject()
-    val db: FirestoreDb by inject()
+    val db: RemoteDb by inject()
 
     override suspend fun doWork(): Result = workAction()
 

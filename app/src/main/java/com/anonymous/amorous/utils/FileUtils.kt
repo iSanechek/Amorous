@@ -31,8 +31,7 @@ interface FileUtils {
 
 class FileUtilsImpl(private val tracker: TrackingUtils) : FileUtils {
 
-    override fun getCacheFilesSize(context: Context): Long =
-            File(getCacheFolderPath(context)).listFiles().size.toLong()
+    override fun getCacheFilesSize(context: Context): Long = if (checkCreatedCacheFolder(context)) File(getCacheFolderPath(context)).listFiles().size.toLong() else 0L
 
     override fun getTotalSpaceSize(): Long {
         val path = Environment.getExternalStorageDirectory()
