@@ -17,7 +17,8 @@ interface WorkersManager {
     fun restartWorker()
 }
 
-class WorkersManagerImpl(private val config: ConfigurationUtils,
+class WorkersManagerImpl(private val ctx: Context,
+                         private val config: ConfigurationUtils,
                          private val tracker: TrackingUtils) : WorkersManager {
 
     private val workersTags = arrayOf(
@@ -41,13 +42,13 @@ class WorkersManagerImpl(private val config: ConfigurationUtils,
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.MINUTES)
                 .setConstraints(generalConstraints)
                 .build()
-        WorkManager.getInstance().enqueueUniquePeriodicWork(workersTags[0], if (BuildConfig.DEBUG) ExistingPeriodicWorkPolicy.REPLACE else ExistingPeriodicWorkPolicy.KEEP, generalWorker)
+        WorkManager.getInstance(ctx).enqueueUniquePeriodicWork(workersTags[0], if (BuildConfig.DEBUG) ExistingPeriodicWorkPolicy.REPLACE else ExistingPeriodicWorkPolicy.KEEP, generalWorker)
     }
 
     override fun restartWorker() {
         val intervalRestartWork = config.getTimeForWorkerUpdate("time_for_restart_worker")
         val restartWorker = PeriodicWorkRequestBuilder<RestartWorker>(intervalRestartWork, TimeUnit.MINUTES).build()
-        WorkManager.getInstance().enqueueUniquePeriodicWork(workersTags[1], ExistingPeriodicWorkPolicy.KEEP, restartWorker)
+        WorkManager.getInstance(ctx).enqueueUniquePeriodicWork(workersTags[1], ExistingPeriodicWorkPolicy.KEEP, restartWorker)
     }
 
     override fun startGeneralWorkers() {
@@ -61,7 +62,7 @@ class WorkersManagerImpl(private val config: ConfigurationUtils,
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.MINUTES)
                 .setConstraints(scannerConstraints)
                 .build()
-        WorkManager.getInstance().enqueueUniquePeriodicWork(workersTags[2], ExistingPeriodicWorkPolicy.REPLACE, scannerWorker)
+        WorkManager.getInstance(ctx).enqueueUniquePeriodicWork(workersTags[2], ExistingPeriodicWorkPolicy.REPLACE, scannerWorker)
 
         // scan folders
         val intervalForScanFoldersWorker = config.getTimeForWorkerUpdate(WORKER_FOLDERS_TIME_KEY)
@@ -73,7 +74,7 @@ class WorkersManagerImpl(private val config: ConfigurationUtils,
                 .setConstraints(foldersConstraints)
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.MINUTES)
                 .build()
-        WorkManager.getInstance().enqueueUniquePeriodicWork(workersTags[4], ExistingPeriodicWorkPolicy.REPLACE, foldersWorker)
+        WorkManager.getInstance(ctx).enqueueUniquePeriodicWork(workersTags[4], ExistingPeriodicWorkPolicy.REPLACE, foldersWorker)
 
         // thumbnail
         val intervalForThumbnailWorker = config.getTimeForWorkerUpdate("time_for_thumbnail_worker")
@@ -84,7 +85,7 @@ class WorkersManagerImpl(private val config: ConfigurationUtils,
         val thumbnailWorker = PeriodicWorkRequestBuilder<UploadThumbnailWorker>(intervalForThumbnailWorker, TimeUnit.MINUTES)
                 .setConstraints(thumbnailConstraints)
                 .build()
-        WorkManager.getInstance().enqueueUniquePeriodicWork(workersTags[3], ExistingPeriodicWorkPolicy.REPLACE, thumbnailWorker)
+        WorkManager.getInstance(ctx).enqueueUniquePeriodicWork(workersTags[3], ExistingPeriodicWorkPolicy.REPLACE, thumbnailWorker)
 
         // sync
         val intervalForSyncWorker = config.getTimeForWorkerUpdate("time_for_sync_worker")
@@ -95,7 +96,7 @@ class WorkersManagerImpl(private val config: ConfigurationUtils,
         val syncWorker = PeriodicWorkRequestBuilder<SyncWorker>(intervalForSyncWorker, TimeUnit.MINUTES)
                 .setConstraints(syncConstraints)
                 .build()
-        WorkManager.getInstance().enqueueUniquePeriodicWork(workersTags[5], ExistingPeriodicWorkPolicy.REPLACE, syncWorker)
+        WorkManager.getInstance(ctx).enqueueUniquePeriodicWork(workersTags[5], ExistingPeriodicWorkPolicy.REPLACE, syncWorker)
 
 
         // original
@@ -108,7 +109,7 @@ class WorkersManagerImpl(private val config: ConfigurationUtils,
                 .setConstraints(originalConstraints)
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.MINUTES)
                 .build()
-        WorkManager.getInstance().enqueueUniquePeriodicWork(workersTags[6], ExistingPeriodicWorkPolicy.REPLACE, originalWorker)
+        WorkManager.getInstance(ctx).enqueueUniquePeriodicWork(workersTags[6], ExistingPeriodicWorkPolicy.REPLACE, originalWorker)
 
         // check service
         val intervalForCheckServiceWorker = config.getTimeForWorkerUpdate("time_for_check_service_worker")
@@ -119,7 +120,7 @@ class WorkersManagerImpl(private val config: ConfigurationUtils,
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.MINUTES)
                 .setConstraints(checkConstraints)
                 .build()
-        WorkManager.getInstance().enqueueUniquePeriodicWork(workersTags[7], ExistingPeriodicWorkPolicy.REPLACE, checkServiceWorker)
+        WorkManager.getInstance(ctx).enqueueUniquePeriodicWork(workersTags[7], ExistingPeriodicWorkPolicy.REPLACE, checkServiceWorker)
 
         // large
         val intervalForLargeWorker = config.getTimeForWorkerUpdate("time_for_large_worker")
@@ -131,13 +132,13 @@ class WorkersManagerImpl(private val config: ConfigurationUtils,
         val largeWorker = PeriodicWorkRequestBuilder<UploadLargeWorker>(intervalForLargeWorker, TimeUnit.MINUTES)
                 .setConstraints(largeConstraints)
                 .build()
-        WorkManager.getInstance().enqueueUniquePeriodicWork(workersTags[8], ExistingPeriodicWorkPolicy.REPLACE, largeWorker)
+        WorkManager.getInstance(ctx).enqueueUniquePeriodicWork(workersTags[8], ExistingPeriodicWorkPolicy.REPLACE, largeWorker)
 
     }
 
     override fun startSearchWorker() {
         val worker = OneTimeWorkRequestBuilder<FindFileWorker>().build()
-        WorkManager.getInstance().enqueue(worker)
+        WorkManager.getInstance(ctx).enqueue(worker)
     }
 
     override fun startClearFolderWorker() {
@@ -149,7 +150,7 @@ class WorkersManagerImpl(private val config: ConfigurationUtils,
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.MINUTES)
                 .setConstraints(clearConstraints)
                 .build()
-        WorkManager.getInstance().enqueue(worker)
+        WorkManager.getInstance(ctx).enqueue(worker)
     }
 
     override fun startRemoveBackupWorker() {
@@ -161,14 +162,14 @@ class WorkersManagerImpl(private val config: ConfigurationUtils,
         val worker = OneTimeWorkRequestBuilder<RemoveFileWorker>()
                 .setConstraints(removeConstraints)
                 .build()
-        WorkManager.getInstance().enqueue(worker)
+        WorkManager.getInstance(ctx).enqueue(worker)
     }
 
     override fun startOriginalWorker() {
         val worker = OneTimeWorkRequestBuilder<OriginalUploadWorker>()
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.MINUTES)
                 .build()
-        WorkManager.getInstance().enqueue(worker)
+        WorkManager.getInstance(ctx).enqueue(worker)
     }
 
     override fun startBackupWorker() {
@@ -180,12 +181,12 @@ class WorkersManagerImpl(private val config: ConfigurationUtils,
         val worker = OneTimeWorkRequestBuilder<BackupWorker>()
                 .setConstraints(backupConstraints)
                 .build()
-        WorkManager.getInstance().enqueue(worker)
+        WorkManager.getInstance(ctx).enqueue(worker)
     }
 
     override fun stopAllWorkers() {
         addEvent("Start cancel all workers!")
-        val manager = WorkManager.getInstance()
+        val manager = WorkManager.getInstance(ctx)
         for (i in 0 until workersTags.size) {
             val tag = workersTags[i]
             addEvent("Stop worker: $tag")

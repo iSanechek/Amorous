@@ -39,6 +39,7 @@ val appModule = module {
 
     factory<WorkersManager> {
         WorkersManagerImpl(
+                androidContext(),
                 get(),
                 get()
         )
