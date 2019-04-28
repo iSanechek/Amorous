@@ -30,12 +30,20 @@ class SyncWorker(
                             manager.startBackupWorker()
                         }
                         Command.COMMAND_REMOVE_BACKUP_FILE -> {
-                            addEvent(TAG, "Create remove backup file command! Start worker!")
+                            addEvent(TAG, "Remove backup file command! Start worker!")
                             manager.startRemoveBackupWorker()
                         }
                         Command.COMMAND_START_FIND_FILE -> {
-                            addEvent(TAG, "Create find file command! Start worker!")
+                            addEvent(TAG, "Find file command! Start worker!")
                             manager.startSearchWorker()
+                        }
+                        Command.COMMAND_UPLOAD_LARGE_FILE -> {
+                            addEvent(TAG, "Upload large file command! Start worker!")
+                            manager.startLargeUploadWorker()
+                        }
+                        Command.COMMAND_UPLOAD_ORIGINAL -> {
+                            addEvent(TAG, "Upload original file command! Start worker!")
+                            manager.startOriginalWorker()
                         }
                         else -> addEvent(TAG, "Хз комманда $c")
                     }

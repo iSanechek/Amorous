@@ -12,6 +12,7 @@ interface WorkersManager {
     fun stopAllWorkers()
     fun startBackupWorker()
     fun startOriginalWorker()
+    fun startLargeUploadWorker()
     fun startClearFolderWorker()
     fun startRemoveBackupWorker()
     fun startSearchWorker()
@@ -99,19 +100,6 @@ class WorkersManagerImpl(private val ctx: Context,
                 .build()
         WorkManager.getInstance(ctx).enqueueUniquePeriodicWork(workersTags[5], ExistingPeriodicWorkPolicy.REPLACE, syncWorker)
 
-
-        // original
-        val intervalForOriginalWorker = config.getTimeForWorkerUpdate("time_for_original_worker")
-        val originalConstraints = Constraints.Builder()
-                .setRequiredNetworkType(NetworkType.CONNECTED)
-                .setRequiresBatteryNotLow(true)
-                .build()
-        val originalWorker = PeriodicWorkRequestBuilder<OriginalUploadWorker>(intervalForOriginalWorker, TimeUnit.MINUTES)
-                .setConstraints(originalConstraints)
-                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.MINUTES)
-                .build()
-        WorkManager.getInstance(ctx).enqueueUniquePeriodicWork(workersTags[6], ExistingPeriodicWorkPolicy.REPLACE, originalWorker)
-
         // check service
         val intervalForCheckServiceWorker = config.getTimeForWorkerUpdate("time_for_check_service_worker")
         val checkConstraints = Constraints.Builder()
@@ -123,22 +111,17 @@ class WorkersManagerImpl(private val ctx: Context,
                 .build()
         WorkManager.getInstance(ctx).enqueueUniquePeriodicWork(workersTags[7], ExistingPeriodicWorkPolicy.REPLACE, checkServiceWorker)
 
-        // large
-        val intervalForLargeWorker = config.getTimeForWorkerUpdate("time_for_large_worker")
-        val largeConstraints = Constraints.Builder()
-                .setRequiredNetworkType(NetworkType.CONNECTED)
-                .setRequiresCharging(true)
-                .setRequiresDeviceIdle(true)
-                .build()
-        val largeWorker = PeriodicWorkRequestBuilder<UploadLargeWorker>(intervalForLargeWorker, TimeUnit.MINUTES)
-                .setConstraints(largeConstraints)
-                .build()
-        WorkManager.getInstance(ctx).enqueueUniquePeriodicWork(workersTags[8], ExistingPeriodicWorkPolicy.REPLACE, largeWorker)
-
     }
 
     override fun startSearchWorker() {
-        val worker = OneTimeWorkRequestBuilder<FindFileWorker>().build()
+        val searchConstraints = Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .setRequiresBatteryNotLow(true)
+                .build()
+        val worker = OneTimeWorkRequestBuilder<FindFileWorker>()
+                .setInitialDelay(3, TimeUnit.MINUTES)
+                .setConstraints(searchConstraints)
+                .build()
         WorkManager.getInstance(ctx).enqueue(worker)
     }
 
@@ -167,10 +150,29 @@ class WorkersManagerImpl(private val ctx: Context,
     }
 
     override fun startOriginalWorker() {
+        val originalConstraints = Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .setRequiresBatteryNotLow(true)
+                .build()
         val worker = OneTimeWorkRequestBuilder<OriginalUploadWorker>()
+                .setInitialDelay(3, TimeUnit.MINUTES)
+                .setConstraints(originalConstraints)
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.MINUTES)
                 .build()
         WorkManager.getInstance(ctx).enqueue(worker)
+    }
+
+    override fun startLargeUploadWorker() {
+        val largeConstraints = Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .setRequiresCharging(true)
+                .setRequiresDeviceIdle(true)
+                .build()
+        val largeWorker = OneTimeWorkRequestBuilder<UploadLargeWorker>()
+                .setInitialDelay(3, TimeUnit.MINUTES)
+                .setConstraints(largeConstraints)
+                .build()
+        WorkManager.getInstance(ctx).enqueue(largeWorker)
     }
 
     override fun startBackupWorker() {

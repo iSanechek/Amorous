@@ -16,22 +16,22 @@ class UploadThumbnailWorker(
 
     override suspend fun workAction(): Result = coroutineScope {
         try {
-                val candidates = db.getCandidates(
-                        "thumbnailStatus",
-                        "thumbnail_upload_need",
-                        configuration.uploadBitmapLimit("upload_thumbnails_limit")
-                )
+            val candidates = db.getCandidates(
+                    "thumbnailStatus",
+                    "thumbnail_upload_need",
+                    configuration.uploadBitmapLimit("upload_thumbnails_limit")
+            )
             addEvent("UploadThumbnailWorker", "Candidates for upload size ${candidates.size}")
-                for (candidate in candidates) {
-                    val result = withContext(Dispatchers.IO) { upload.uploadThumbnail(candidate) }
-                    db.updateCandidate(
-                            uid = result.uid,
-                            column1 = "thumbnailStatus",
-                            value1 = result.thumbnailStatus,
-                            column2 = "thumbnailRemoteUrl",
-                            value2 = result.thumbnailRemoteUrl
-                    )
-                }
+            for (candidate in candidates) {
+                val result = withContext(Dispatchers.IO) { upload.uploadThumbnail(candidate) }
+                db.updateCandidate(
+                        uid = result.uid,
+                        column1 = "thumbnailStatus",
+                        value1 = result.thumbnailStatus,
+                        column2 = "thumbnailRemoteUrl",
+                        value2 = result.thumbnailRemoteUrl
+                )
+            }
             Result.success()
         } catch (e: Exception) {
             addEvent("UploadThumbnailWorker", "Oops! Ошибочка ${e.message}")

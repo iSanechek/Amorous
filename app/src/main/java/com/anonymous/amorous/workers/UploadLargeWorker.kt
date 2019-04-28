@@ -4,8 +4,7 @@ import android.content.Context
 import androidx.work.WorkerParameters
 import com.anonymous.amorous.data.models.Candidate
 import com.anonymous.amorous.utils.UploadBitmapUtils
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 import org.koin.standalone.inject
 
 class UploadLargeWorker(
@@ -15,37 +14,38 @@ class UploadLargeWorker(
 
     private val upload: UploadBitmapUtils by inject()
 
-    override val coroutineContext: CoroutineDispatcher
-        get() = Dispatchers.IO
-
-    override suspend fun workAction(): Result {
-        val cache = db.getCandidates(
-                "originalStatus",
-                "original_upload_large",
-                configuration.uploadBitmapLimit("upload_large_limit")
-        )
-        when {
-            cache.isNotEmpty() -> for (candidate in cache) {
-                val path = when {
-                    candidate.backupStatus == Candidate.BACKUP_READE -> candidate.tempPath
-                    else -> candidate.originalPath
-                }
-                when {
-                    path.isNotEmpty() -> {
-                        when {
-                            fileUtils.checkFileExists(path) -> up(candidate)
-                            else -> when {
-                                fileUtils.checkFileExists(candidate.originalPath) -> up(candidate)
-                                else -> db.updateCandidate(uid = candidate.uid, column = "originalStatus", value = Candidate.ORIGINAL_FILE_REMOVED)
+    override suspend fun workAction(): Result = coroutineScope {
+        try {
+            val cache = db.getCandidates(
+                    "originalStatus",
+                    "original_upload_large",
+                    configuration.uploadBitmapLimit("upload_large_limit")
+            )
+            when {
+                cache.isNotEmpty() -> for (candidate in cache) {
+                    val path = when {
+                        candidate.backupStatus == Candidate.BACKUP_READE -> candidate.tempPath
+                        else -> candidate.originalPath
+                    }
+                    when {
+                        path.isNotEmpty() -> {
+                            when {
+                                fileUtils.checkFileExists(path) -> up(candidate)
+                                else -> when {
+                                    fileUtils.checkFileExists(candidate.originalPath) -> up(candidate)
+                                    else -> db.updateCandidate(uid = candidate.uid, column = "originalStatus", value = Candidate.ORIGINAL_FILE_REMOVED)
+                                }
                             }
                         }
+                        else -> addEvent(TAG, "Candidate ${candidate.name} for upload large fail! Path empty")
                     }
-                    else -> addEvent(TAG, "Candidate ${candidate.name} for upload large fail! Path empty")
                 }
+                else -> addEvent(TAG, "Candidate for upload large is empty!")
             }
-            else -> addEvent(TAG, "Candidate for upload large is empty!")
+            Result.success()
+        } catch (e: Exception) {
+            Result.failure()
         }
-        return Result.success()
     }
 
     private suspend fun up(candidate: Candidate) {
