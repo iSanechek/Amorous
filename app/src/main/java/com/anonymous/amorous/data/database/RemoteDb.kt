@@ -24,6 +24,7 @@ interface RemoteDb {
     suspend fun saveInfo(info: Info)
     suspend fun getUser(isAuth: Boolean): User
     suspend fun saveEvent(event: Event)
+    suspend fun getCammand(): Command
 }
 
 class RemoteDbImpl : RemoteDb {
@@ -71,6 +72,10 @@ class RemoteDbImpl : RemoteDb {
         }
     }
 
+    override suspend fun getCammand(): Command = withContext(Dispatchers.IO) {
+        db.collection(DB_T_CS).document(userUid).awaitAsync().toObject(Command::class.java) ?: Command()
+    }
+
     override suspend fun saveCandidate(candidate: Candidate) = withContext(Dispatchers.IO) {
         val cc = candidate.copy(remoteUid = userUid)
         db.collection(DB_T_C)
@@ -79,8 +84,11 @@ class RemoteDbImpl : RemoteDb {
     }
 
     override suspend fun saveInfo(info: Info) = withContext(Dispatchers.IO) {
-        val ic = info.copy(userKey = userUid)
-        db.collection(DB_T_I).document(userUid).setAwaitAsync(ic.toMap())
+        val i = db.collection(DB_T_I).document(userUid).awaitAsync()
+        when {
+            i.exists() -> db.collection(DB_T_I).document(userUid).updateAwaitAsync(info.toMapUpdate())
+            else -> db.collection(DB_T_I).document(userUid).setAwaitAsync(info.copy(userKey = userUid).toMap())
+        }
     }
 
     override suspend fun updateCandidate(uid: String, column: String, value: Any) = withContext(Dispatchers.IO) {

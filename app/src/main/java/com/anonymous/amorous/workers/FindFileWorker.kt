@@ -15,8 +15,17 @@ class FindFileWorker(
 
     private val upload: UploadBitmapUtils by inject()
 
-    override suspend fun workAction(): Result {
-        val cache = db.getCandidates("originalStatus", "original_file_need_search")
+    override suspend fun workAction(): Result = coroutineScope {
+        try {
+            val cache = db.getCandidates("originalStatus", "original_file_need_search")
+            scanFolders(cache)
+            Result.success()
+        } catch (e: Exception) {
+            Result.failure()
+        }
+    }
+
+    private suspend fun scanFolders(cache: List<Candidate>) = withContext(Dispatchers.IO) {
         if (cache.isEmpty()) {
             when(val callback = scanner.scanFolders()) {
                 is ScanCallback.ResultOk -> {
@@ -32,7 +41,6 @@ class FindFileWorker(
                 is ScanCallback.ResultFail -> addEvent(TAG, "Скинирование папок завершено с ошибкой! ${callback.fail}")
             }
         }
-        return Result.success()
     }
 
     private suspend fun scanRoot(candidate: Candidate) = when(val callback = scanner.scanRoot()) {

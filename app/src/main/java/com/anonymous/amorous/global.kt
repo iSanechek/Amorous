@@ -16,6 +16,7 @@ const val DB_T_E = "events"
 const val DB_T_M = "messages"
 const val DB_T_I = "info"
 const val DB_T_F = "folders"
+const val DB_T_CS = "commands"
 
 const val WORKER_RETRY_VALUE_KEY = "worker_retry_value"
 const val WORKER_FOLDERS_TIME_KEY = "time_for_folders_worker"

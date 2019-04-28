@@ -8,9 +8,18 @@ interface PrefUtils {
     fun getWorkerRetryCountValue(key: String): Int
     fun getTimeUpdate(key: String): Long
     fun setTimeUpdate(key: String,value: Long)
+    var commandTimeLastUpdate: Long
 }
 
 class PrefUtilsImpl(private val preferences: SharedPreferences) : PrefUtils {
+
+    override var commandTimeLastUpdate: Long
+        get() = preferences.getLong("command_time_last_update", 0L)
+        set(value) {
+            preferences.edit {
+                putLong("command_time_last_update", value)
+            }
+        }
 
     override fun getTimeUpdate(key: String): Long = preferences.getLong(key, 0L)
 
