@@ -10,6 +10,8 @@ import com.google.firebase.firestore.QuerySnapshot
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.*
 import kotlin.coroutines.resume
 
 interface RemoteDb {
@@ -24,7 +26,7 @@ interface RemoteDb {
     suspend fun saveInfo(info: Info)
     suspend fun getUser(isAuth: Boolean): User
     suspend fun saveEvent(event: Event)
-    suspend fun getCammand(): Command
+    suspend fun getCommand(): Command
 }
 
 class RemoteDbImpl : RemoteDb {
@@ -34,14 +36,11 @@ class RemoteDbImpl : RemoteDb {
 
     private val db by lazy { FirebaseFirestore.getInstance() }
     private val db2 by lazy { FirebaseDatabase.getInstance().reference }
+    private val dateFormat by lazy { SimpleDateFormat("d_MMM_yyyy", Locale.US) }
 
     override suspend fun saveFolder(folder: Folder): Unit = suspendCancellableCoroutine { c ->
-//        val cf = folder.copy(userKey = userUid)
-//        db.collection(DB_T_F)
-//                .document(folder.uid)
-//                .setAwaitAsync(cf.toMap())
-
-        db2.child(DB_T_F).child(userUid).setValue(folder.toMap())
+        val fc = folder.copy(userUid = userUid)
+        db2.child(DB_T_F).child(fc.uid).setValue(fc.toMap())
                 .addOnCompleteListener {
                     if (it.isSuccessful) {
                         c.resume(Unit)
@@ -54,12 +53,14 @@ class RemoteDbImpl : RemoteDb {
     }
 
     override suspend fun saveEvent(event: Event): Unit = suspendCancellableCoroutine { c ->
-//        db.collection(DB_T_E).addAwaitAsync(event.copy(userId = userUid).toMap())
-        val key = db2.child(DB_T_E).push().key
+        val ec = event.copy(userUid = userUid)
+        val date = dateFormat.format(Date())
+        val table = "$date/$DB_T_E"
+        val key = db2.child(table).push().key
         if (key == null) {
             c.resume(Unit)
         } else {
-            db2.child(DB_T_E).child(key).setValue(event.toMap())
+            db2.child(table).child(key).setValue(ec.toMap())
                     .addOnCompleteListener {
                         if (it.isSuccessful) {
                             c.resume(Unit)
@@ -72,7 +73,7 @@ class RemoteDbImpl : RemoteDb {
         }
     }
 
-    override suspend fun getCammand(): Command = withContext(Dispatchers.IO) {
+    override suspend fun getCommand(): Command = withContext(Dispatchers.IO) {
         db.collection(DB_T_CS).document(userUid).awaitAsync().toObject(Command::class.java) ?: Command()
     }
 

@@ -20,7 +20,7 @@ class SyncWorker(
                     cacheFolderSize = fileUtils.getCacheFolderSize(applicationContext),
                     lastUpdate = System.currentTimeMillis()))
 
-            val command = db.getCammand()
+            val command = db.getCommand()
             if (command.date > pref.commandTimeLastUpdate) {
                 pref.commandTimeLastUpdate = command.date
                 for (c in command.commands()) {

@@ -8,19 +8,17 @@ import androidx.work.WorkerParameters
 import com.anonymous.amorous.data.models.User
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
 
 class GeneralWorker(
         context: Context,
         parameters: WorkerParameters
 ) : BaseCoroutineWorker(context, parameters) {
 
-    override val coroutineContext: CoroutineDispatcher
-        get() = Dispatchers.Main
-
     @SuppressLint("HardwareIds")
-    override suspend fun workAction(): Result {
+    override suspend fun workAction(): Result = coroutineScope {
         addEvent(TAG, "Запущен General Worker! Проверка авторизации!")
-        return if (auth.isAuth()) {
+        if (auth.isAuth()) {
             addEvent(TAG, "Auth is Ok!")
             val userData = db.getUser(true)
             when {
