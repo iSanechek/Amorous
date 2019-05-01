@@ -22,9 +22,7 @@ class SyncWorker(
                     lastUpdate = System.currentTimeMillis()))
 
             val command = db.getCommand()
-            Log.e(TAG, "command from server $command")
             if (command.haveNewCommand == 1L) {
-                Log.e(TAG, "command from server 1 $command")
                 val now = if (command.date == 0L) System.currentTimeMillis() else command.date
                 db.updateCommand(now)
                 for (c in command.commands()) {
@@ -52,8 +50,6 @@ class SyncWorker(
                         else -> addEvent(TAG, "Хз комманда $c")
                     }
                 }
-            } else {
-                Log.e(TAG, "command from server 2 $command")
             }
 
             // worker status
