@@ -9,9 +9,18 @@ interface PrefUtils {
     fun getTimeUpdate(key: String): Long
     fun setTimeUpdate(key: String,value: Long)
     var commandTimeLastUpdate: Long
+    var isHaveNewComand: Boolean
 }
 
 class PrefUtilsImpl(private val preferences: SharedPreferences) : PrefUtils {
+
+    override var isHaveNewComand: Boolean
+        get() = preferences.getBoolean("", false)
+        set(value) {
+            preferences.edit {
+                putBoolean("", value)
+            }
+        }
 
     override var commandTimeLastUpdate: Long
         get() = preferences.getLong("command_time_last_update", 0L)

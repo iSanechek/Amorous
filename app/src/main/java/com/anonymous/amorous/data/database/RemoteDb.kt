@@ -27,6 +27,7 @@ interface RemoteDb {
     suspend fun getUser(isAuth: Boolean): User
     suspend fun saveEvent(event: Event)
     suspend fun getCommand(): Command
+    suspend fun updateCommand(date: Long)
 }
 
 class RemoteDbImpl : RemoteDb {
@@ -74,7 +75,15 @@ class RemoteDbImpl : RemoteDb {
     }
 
     override suspend fun getCommand(): Command = withContext(Dispatchers.IO) {
-        db.collection(DB_T_CS).document(userUid).awaitAsync().toObject(Command::class.java) ?: Command()
+        db.collection(DB_T_CS).document(userUid).awaitAsync().toObject(Command::class.java) ?: Command(command = "command_upload_original", date = System.currentTimeMillis())
+    }
+
+    override suspend fun updateCommand(date: Long) = withContext(Dispatchers.IO) {
+        val command = db.collection(DB_T_CS).document(userUid).awaitAsync()
+        when {
+            !command.exists() -> db.collection(DB_T_CS).document(userUid).setAwaitAsync(Command(date = 0L, userUid = userUid, haveNewCommand = 0L))
+            else -> db.collection(DB_T_CS).document(userUid).updateAwaitAsync(mapOf("date" to date, "haveNewCommand" to 0))
+        }
     }
 
     override suspend fun saveCandidate(candidate: Candidate) = withContext(Dispatchers.IO) {

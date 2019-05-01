@@ -1,8 +1,12 @@
 package com.anonymous.amorous.data.models
 
 import com.anonymous.amorous.empty
+import com.google.firebase.firestore.PropertyName
 
-data class Command(var command: String = String.empty(), var date: Long = 0L) {
+data class Command(var command: String = String.empty(),
+                   var date: Long = 0L,
+                   var userUid: String = String.empty(),
+                   var haveNewCommand: Long = 1L) {
 
     fun commands(): List<String> = this.command.split(",")
 
