@@ -5,7 +5,7 @@ import androidx.work.WorkerParameters
 import com.anonymous.amorous.data.models.Candidate
 import com.anonymous.amorous.utils.UploadBitmapUtils
 import kotlinx.coroutines.coroutineScope
-import org.koin.standalone.inject
+import org.koin.core.inject
 
 class UploadLargeWorker(
         appContext: Context,

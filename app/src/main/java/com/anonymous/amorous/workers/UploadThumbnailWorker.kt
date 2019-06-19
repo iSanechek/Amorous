@@ -6,7 +6,7 @@ import com.anonymous.amorous.utils.UploadBitmapUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
-import org.koin.standalone.inject
+import org.koin.core.inject
 
 class UploadThumbnailWorker(
         appContext: Context,

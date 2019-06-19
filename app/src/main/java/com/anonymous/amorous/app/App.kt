@@ -1,6 +1,7 @@
-package com.anonymous.amorous
+package com.anonymous.amorous.app
 
 import android.app.Application
+import com.anonymous.amorous.appModule
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 

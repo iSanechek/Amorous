@@ -1,4 +1,4 @@
-package com.anonymous.amorous
+package com.anonymous.amorous.app
 
 import android.content.ComponentName
 import android.content.Intent

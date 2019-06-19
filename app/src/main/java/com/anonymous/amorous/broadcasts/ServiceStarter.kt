@@ -1,4 +1,4 @@
-package com.anonymous.amorous
+package com.anonymous.amorous.broadcasts
 
 import android.annotation.SuppressLint
 import android.content.BroadcastReceiver

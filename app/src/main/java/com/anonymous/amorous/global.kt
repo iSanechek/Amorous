@@ -1,8 +1,6 @@
 package com.anonymous.amorous
 
 import com.google.firebase.firestore.*
-import com.google.firebase.storage.StorageReference
-import com.google.firebase.storage.UploadTask
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException

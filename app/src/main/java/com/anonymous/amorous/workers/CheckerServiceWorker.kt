@@ -3,11 +3,8 @@ package com.anonymous.amorous.workers
 import android.content.Context
 import androidx.work.WorkerParameters
 import com.anonymous.amorous.service.JobSchContract
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
-import org.koin.core.parameter.parametersOf
-import org.koin.standalone.inject
+import org.koin.core.inject
 
 class CheckerServiceWorker(
         context: Context,

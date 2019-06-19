@@ -5,8 +5,8 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.anonymous.amorous.data.database.RemoteDb
 import com.anonymous.amorous.utils.*
-import org.koin.standalone.KoinComponent
-import org.koin.standalone.inject
+import org.koin.core.KoinComponent
+import org.koin.core.inject
 
 abstract class BaseCoroutineWorker(
         context: Context,

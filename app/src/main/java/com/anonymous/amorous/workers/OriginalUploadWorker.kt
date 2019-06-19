@@ -6,7 +6,7 @@ import com.anonymous.amorous.data.models.Candidate
 import com.anonymous.amorous.utils.UploadBitmapUtils
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import org.koin.standalone.inject
+import org.koin.core.inject
 
 class OriginalUploadWorker(
         appContext: Context,
