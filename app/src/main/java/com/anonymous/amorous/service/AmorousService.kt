@@ -1,6 +1,7 @@
 package com.anonymous.amorous.service
 
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.os.IBinder
 import com.anonymous.amorous.utils.TrackingUtils
@@ -35,5 +36,13 @@ class AmorousService : Service() {
 
     companion object {
         private const val TAG = "AmorousService"
+
+        fun startService(context: Context?) {
+            context?.let {
+                Intent(context, AmorousService::class.java).run {
+                    context.startService(this)
+                }
+            }
+        }
     }
 }
