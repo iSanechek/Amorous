@@ -1,7 +1,6 @@
 package com.anonymous.amorous.utils
 
 import com.anonymous.amorous.data.models.User
-import com.anonymous.amorous.empty
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -58,8 +57,8 @@ class AuthUtilsImpl(
 
     override suspend fun authOut(u: User): User {
         authInstance.signOut()
-        return when {
-            authInstance.currentUser == null -> {
+        return when (authInstance.currentUser) {
+            null -> {
                 addEvent("Sign out is done!")
                 u.copy(authState = User.NEED_SIGN_IN)
             }
